@@ -17,19 +17,16 @@ import {
   
     canActivate(context: ExecutionContext): boolean {
       const client = context.switchToWs().getClient();
-  
-      // ---- 1) Bearer header (optional) ----
+
       let token = client.handshake?.headers?.authorization?.replace('Bearer ', '');
-  
-      // ---- 2) handshake auth (Socket.io 4.x) ----
+
       if (!token) {
         token = client.handshake?.auth?.token;
       }
-  
-      // ---- 3) Cookies ----
+
       if (!token && client.handshake?.headers?.cookie) {
         const parsed = cookie.parse(client.handshake.headers.cookie);
-        token = parsed.jwt; // <-- cookie name
+        token = parsed.jwt;
       }
   
       if (!token) {
@@ -40,8 +37,7 @@ import {
         const payload = this.jwtService.verify(token, {
           secret: this.configService.get<string>('JWT_SECRET') ?? 'app_jwt_secret',
         });
-  
-        // ✅ Attach user to socket
+   
         client.user = payload;
         return true;
       } catch (e) {
