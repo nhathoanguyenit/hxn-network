@@ -6,11 +6,9 @@ import {
     CreateDateColumn,
     UpdateDateColumn,
     JoinTable,
-    OneToOne,
-    JoinColumn,
 } from "typeorm";
 
-@Entity("users")
+@Entity({name: "users", schema:"hxn_user"})
 export class User {
     @PrimaryGeneratedColumn("uuid")
     id: string;
@@ -42,7 +40,7 @@ export class User {
     roles: Role[];
 }
 
-@Entity("user_profiles")
+@Entity({name: "user_profiles", schema:"hxn_user"})
 export class UserProfile {
     @PrimaryGeneratedColumn("uuid")
     id: string;
@@ -79,16 +77,16 @@ export class UserProfile {
 }
 
 
-@Entity("roles")
+@Entity({name: "roles", schema:"hxn_user"})
 export class Role {
     @PrimaryGeneratedColumn("uuid")
     id: string;
 
     @Column({ unique: true })
-    code: string; // e.g. 'ADMIN', 'EDITOR'
+    code: string;
 
     @Column()
-    name: string; // e.g. 'Administrator'
+    name: string;
 
     @Column({ nullable: true })
     description: string;
@@ -110,7 +108,7 @@ export class Role {
     permissions: Permission[];
 }
 
-@Entity("permissions")
+@Entity({name: "permissions", schema:"hxn_user"})
 export class Permission {
     @PrimaryGeneratedColumn("uuid")
     id: string;

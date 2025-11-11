@@ -21,7 +21,7 @@ export class ServicesController {
       appName: this.servicesService.getAppName(),
       title: "Services",
       page: path,
-      roles: user?.roles || [],
+      user,
     };
   }
 
@@ -34,7 +34,7 @@ export class ServicesController {
       appName: this.servicesService.getAppName(),
       title: "Services",
       page: path,
-      roles: user?.roles || [],
+      user,
     };
   }
 

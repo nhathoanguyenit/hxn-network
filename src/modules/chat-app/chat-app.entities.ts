@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, JoinColumn, UpdateDateColumn, OneToMany, PrimaryColumn } from "typeorm";
 
-@Entity({ name: "chats" })
+@Entity({name: "chats", schema:"hxn_chat"})
 export class Chat {
     @PrimaryGeneratedColumn("uuid")
     id: string;
@@ -24,7 +24,7 @@ export class Chat {
     messages: Message[];
 }
 
-@Entity({ name: 'chat_messages' })
+@Entity({name: "chat_messages", schema:"hxn_chat"})
 export class Message {
     @PrimaryGeneratedColumn('uuid')
     id: string;
@@ -58,7 +58,7 @@ export class Message {
     attachments: Attachment[];
 }
 
-@Entity({ name: "chat_message_statuses" })
+@Entity({name: "chat_message_statuses", schema:"hxn_chat"})
 export class MessageStatus {
     @PrimaryColumn("uuid", { name: "message_id" })
     messageId: string;
@@ -77,7 +77,7 @@ export class MessageStatus {
     message: Message;
 }
 
-@Entity({ name: "chat_participants" })
+@Entity({name: "chat_participants", schema:"hxn_chat"})
 export class Participant {
     @PrimaryColumn("uuid", { name: "chat_id" })
     chatId: string;
@@ -96,6 +96,7 @@ export class Participant {
     chat: Chat;
 }
 
+@Entity({name: "chat_attachments", schema:"hxn_chat"})
 @Entity({ name: "chat_attachments" })
 export class Attachment {
     @PrimaryGeneratedColumn("uuid")

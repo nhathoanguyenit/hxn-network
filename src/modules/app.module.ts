@@ -9,7 +9,6 @@ import { ToolAppModule } from "./tool-app/tool-app.module";
 import { WebAppModule } from "./web-app/web-app.module";
 import * as chatEntities from "./chat-app/chat-app.entities";
 import * as userEntities from "./user-app/user-app.entities";
-import { APP_GUARD } from "@nestjs/core";
 
 @Module({
   imports: [
@@ -20,11 +19,11 @@ import { APP_GUARD } from "@nestjs/core";
       useFactory: () => {
         return {
           type: "postgres",
-          host: process.env.PG_HOST,
-          port: parseInt(process.env.PG_PORT as any, 10),
-          username: process.env.PG_USER,
-          password: process.env.PG_PASSWORD,
-          database: process.env.PG_DB,
+          host: process.env.DB_HOST,
+          port: parseInt(process.env.DB_PORT as any, 10),
+          username: process.env.DB_USERNAME,
+          password: process.env.DB_PASSWORD,
+          database: process.env.DB_NAME,
           synchronize: false,
           logging: false,
           entities: [...Object.values(chatEntities), ...Object.values(userEntities)],

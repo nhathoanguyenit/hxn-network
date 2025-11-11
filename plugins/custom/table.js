@@ -10,15 +10,48 @@ class CustomTable {
     this.total = 0;
     this.pageCount = 0;
     this.className = config.className || "table table-striped table-bordered";
-    // Create limit selector and summary dynamically
+    this.renderTable([]);
     this.createPaginationControls();
-    this.fetchData();
+  }
+
+  showLoading() {
+    // remove any existing overlay
+    this.hideLoading();
+
+    const overlay = document.createElement("div");
+    overlay.className = "table-loading-overlay d-flex justify-content-center align-items-center";
+    overlay.innerHTML = `
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  `;
+
+    // inline styles so it always works without external CSS
+    Object.assign(overlay.style, {
+      position: "absolute",
+      top: "0",
+      left: "0",
+      width: "100%",
+      height: "100%",
+      background: "rgba(255,255,255,0.7)",
+      zIndex: "10",
+    });
+
+    this.container.style.position = "relative"; // ensure positioning context
+    this.container.appendChild(overlay);
+    this._loadingOverlay = overlay;
+  }
+
+  hideLoading() {
+    if (this._loadingOverlay) {
+      this._loadingOverlay.remove();
+      this._loadingOverlay = null;
+    }
   }
 
   createPaginationControls() {
     if (!this.paginationContainer) return;
 
-    // Limit select
     this.limitSelect = document.createElement("select");
     this.limitSelect.className = "form-select d-inline-block w-auto me-2";
     [5, 10, 25, 50].forEach((n) => {
@@ -52,12 +85,13 @@ class CustomTable {
     this.paginationContainer.appendChild(this.buttonsContainer);
   }
 
-  async fetchData() {
-    this.renderTable([]);
+  async fetchData(param = {}) {
     try {
-      const payload = { page: this.page, limit: this.limit };
+      this.showLoading(); // overlay spinner
+      const payload = { ...param, page: this.page, limit: this.limit };
       const res = await axios.post(this.endpoint, payload);
       const { data, meta } = res.data;
+
       this.total = meta.total;
       this.pageCount = meta.pageCount;
       this.limit = meta.limit;
@@ -67,22 +101,23 @@ class CustomTable {
       this.renderPagination();
       this.renderSummary();
     } catch (err) {
-      this.renderTable([]);
       console.error("Error loading data:", err);
       this.container.innerHTML = `<div class="${this.emptyState.className}">${this.emptyState.text}</div>`;
       this.summaryContainer.textContent = "";
       this.buttonsContainer.innerHTML = "";
+    } finally {
+      this.hideLoading(); // remove overlay
     }
   }
-
+  
   renderTable(rows) {
     this.container.innerHTML = "";
-  
+
     const table = document.createElement("table");
     table.style.tableLayout = "fixed";
     table.style.width = "100%";
     table.className = this.className;
-  
+
     // ---- HEADER ----
     const thead = document.createElement("thead");
     const headerRow = document.createElement("tr");
@@ -94,10 +129,10 @@ class CustomTable {
     });
     thead.appendChild(headerRow);
     table.appendChild(thead);
-  
+
     // ---- BODY ----
     const tbody = document.createElement("tbody");
-  
+
     if (!rows || rows.length === 0) {
       const tr = document.createElement("tr");
       const td = document.createElement("td");
@@ -123,17 +158,17 @@ class CustomTable {
         tbody.appendChild(tr);
       });
     }
-  
+
     table.appendChild(tbody);
     this.container.appendChild(table);
   }
-  
+
   renderPagination() {
     if (!this.buttonsContainer) return;
     this.buttonsContainer.innerHTML = "";
-  
+
     if (this.pageCount <= 1) return;
-  
+
     const createButton = (text, page, isActive = false, disabled = false) => {
       const btn = document.createElement("button");
       btn.className = `btn btn-sm mx-1 ${isActive ? "btn-primary" : "btn-outline-primary"}`;
@@ -145,17 +180,17 @@ class CustomTable {
       });
       this.buttonsContainer.appendChild(btn);
     };
-  
+
     // Previous button
     createButton("<", Math.max(this.page - 1, 1), false, this.page === 1);
-  
+
     const pages = [];
     const total = this.pageCount;
-  
+
     for (let i = 1; i <= total; i++) {
       if (
-        i <= 3 ||                   // first 3 pages
-        i > total - 2 ||             // last 2 pages
+        i <= 3 || // first 3 pages
+        i > total - 2 || // last 2 pages
         (i >= this.page - 1 && i <= this.page + 1) // current ±1
       ) {
         pages.push(i);
@@ -163,9 +198,9 @@ class CustomTable {
         pages.push("...");
       }
     }
-  
+
     // Render page buttons
-    pages.forEach(p => {
+    pages.forEach((p) => {
       if (p === "...") {
         const span = document.createElement("span");
         span.textContent = "...";
@@ -175,7 +210,7 @@ class CustomTable {
         createButton(p, p, p === this.page);
       }
     });
-  
+
     // Next button
     createButton(">", Math.min(this.page + 1, total), false, this.page === total);
   }

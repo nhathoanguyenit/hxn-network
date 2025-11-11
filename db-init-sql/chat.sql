@@ -1,9 +1,8 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- =============================================
--- Table: chats
--- =============================================
-CREATE TABLE chats (
+CREATE SCHEMA IF NOT EXISTS hxn_chat;
+
+CREATE TABLE hxn_chat.chats (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     type VARCHAR NOT NULL,
     title VARCHAR NULL,
@@ -11,10 +10,7 @@ CREATE TABLE chats (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
--- =============================================
--- Table: chat_participants
--- =============================================
-CREATE TABLE chat_participants (
+CREATE TABLE hxn_chat.chat_participants (
     chat_id UUID NOT NULL,
     user_id UUID NOT NULL,
     is_admin BOOLEAN DEFAULT FALSE NOT NULL,
@@ -22,10 +18,7 @@ CREATE TABLE chat_participants (
     PRIMARY KEY (chat_id, user_id)
 );
 
--- =============================================
--- Table: chat_messages
--- =============================================
-CREATE TABLE chat_messages (
+CREATE TABLE hxn_chat.chat_messages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     chat_id UUID NOT NULL,
     sender_id UUID NOT NULL,
@@ -35,10 +28,7 @@ CREATE TABLE chat_messages (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
--- =============================================
--- Table: chat_message_statuses
--- =============================================
-CREATE TABLE chat_message_statuses (
+CREATE TABLE hxn_chat.chat_message_statuses (
     message_id UUID NOT NULL,
     user_id UUID NOT NULL,
     delivered_at TIMESTAMP WITH TIME ZONE NULL,
@@ -46,10 +36,7 @@ CREATE TABLE chat_message_statuses (
     PRIMARY KEY (message_id, user_id)
 );
 
--- =============================================
--- Table: chat_attachments
--- =============================================
-CREATE TABLE chat_attachments (
+CREATE TABLE hxn_chat.chat_attachments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     message_id UUID NOT NULL,
     file_url VARCHAR NOT NULL,
@@ -58,7 +45,7 @@ CREATE TABLE chat_attachments (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
-INSERT INTO chats (id, type, title, created_at, updated_at)
+INSERT INTO hxn_chat.chats (id, type, title, created_at, updated_at)
 VALUES (
     '00000000-0000-0000-0000-000000000000',
     'public',

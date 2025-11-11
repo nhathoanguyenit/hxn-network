@@ -43,18 +43,18 @@
                     initChat(data.user);
                 });
 
-                const pingLoop = async () => {
-                    const start = Date.now();
-                    try {
-                        const data = await sdk.emit("ping", { clientTime: start }, 5000, "pong");
-                        const latency = Date.now() - start;
-                        updatePingColor(latency);
-                        pingDisplay.textContent = `${latency} ms`;
-                    } catch {
-                        pingDisplay.textContent = `999 ms`;
-                        pingDisplay.style.color = "#FF0000";
-                    }
-                };
+                // const pingLoop = async () => {
+                //     const start = Date.now();
+                //     try {
+                //         const data = await sdk.emit("ping", { clientTime: start }, 5000, "pong");
+                //         const latency = Date.now() - start;
+                //         updatePingColor(latency);
+                //         pingDisplay.textContent = `${latency} ms`;
+                //     } catch {
+                //         pingDisplay.textContent = `999 ms`;
+                //         pingDisplay.style.color = "#FF0000";
+                //     }
+                // };
 
                 initChat();
             })

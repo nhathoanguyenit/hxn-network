@@ -1,6 +1,8 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
-CREATE TABLE users (
+CREATE SCHEMA IF NOT EXISTS hxn_user;
+
+CREATE TABLE hxn_user.users (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     username VARCHAR(100) UNIQUE NOT NULL,
     fullname VARCHAR(255) NOT NULL,
@@ -9,7 +11,7 @@ CREATE TABLE users (
     updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
 
-CREATE TABLE user_profiles (
+CREATE TABLE hxn_user.user_profiles (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID NOT NULL UNIQUE,
     display_name VARCHAR(255),
@@ -24,39 +26,39 @@ CREATE TABLE user_profiles (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE TABLE roles (
+CREATE TABLE hxn_user.roles (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     code VARCHAR(50) UNIQUE NOT NULL,
     name VARCHAR(100) NOT NULL, 
     description TEXT
 );
 
-CREATE TABLE permissions (
+CREATE TABLE hxn_user.permissions (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     code VARCHAR(100) UNIQUE NOT NULL,       
     name VARCHAR(100) NOT NULL,
     description TEXT
 );
 
-CREATE TABLE user_roles (
+CREATE TABLE hxn_user.user_roles (
     user_id uuid NOT NULL,
     role_id uuid NOT NULL,
     PRIMARY KEY (user_id, role_id)
 );
 
-CREATE TABLE role_permissions (
+CREATE TABLE hxn_user.role_permissions (
     role_id uuid NOT NULL,
     permission_id uuid NOT NULL,
     PRIMARY KEY (role_id, permission_id)
 );
 
-INSERT INTO roles (code, name, description)
+INSERT INTO hxn_user.roles (code, name, description)
 VALUES
   ('ADMIN', 'Administrator', 'Has full system access'),
   ('AGENT', 'Agent', 'Handles operational tasks'),
   ('USER', 'User', 'Read-only access');
 
-INSERT INTO users (id, username, fullname, password, created_at, updated_at)
+INSERT INTO hxn_user.users (id, username, fullname, password, created_at, updated_at)
 VALUES
   ('00000000-0000-0000-0000-000000000000', 'ADMIN', 'System Admin', '$2b$10$pdlxxHxI04SCtdMr2ze24ubacfX8hJWVnIdi5kLm29A2mYmMiuKRm', NOW(), NOW()),
   ('00000000-0000-0000-0000-000000000001', 'AGENT', 'Support Agent', '$2b$10$pdlxxHxI04SCtdMr2ze24ubacfX8hJWVnIdi5kLm29A2mYmMiuKRm', NOW(), NOW()),
@@ -97,16 +99,16 @@ VALUES
 --   (gen_random_uuid(), 'noah30', 'Noah Vo', 'guest123', NOW(), NOW());
 
 
-INSERT INTO user_profiles (id, user_id, display_name, bio, birthday, location, work, interests, created_at, updated_at)
+INSERT INTO hxn_user.user_profiles (id, user_id, display_name, bio, birthday, location, work, interests, created_at, updated_at)
 VALUES
   (gen_random_uuid(), '00000000-0000-0000-0000-000000000000', 'System Admin', 'Manages the system', NULL, 'HQ', 'Administrator', ARRAY['management', 'security'], NOW(), NOW()),
   (gen_random_uuid(), '00000000-0000-0000-0000-000000000001', 'Support Agent', 'Handles user support', NULL, 'Remote', 'Support', ARRAY['communication', 'helpdesk'], NOW(), NOW()),
   (gen_random_uuid(), '00000000-0000-0000-0000-000000000002', 'User', 'Temporary guest account', NULL, NULL, NULL, ARRAY['explore'], NOW(), NOW());
 
-INSERT INTO user_roles (user_id, role_id)
+INSERT INTO hxn_user.user_roles (user_id, role_id)
 SELECT u.id, r.id
-FROM users u
-JOIN roles r ON (
+FROM hxn_user.users u
+JOIN hxn_user.roles r ON (
   (u.username = 'ADMIN' AND r.code = 'ADMIN') OR
   (u.username = 'AGENT' AND r.code = 'AGENT') OR
   (u.username = 'USER' AND r.code = 'USER')
@@ -115,8 +117,19 @@ JOIN roles r ON (
 SELECT
   u.username,
   array_agg(r.code) AS roles
-FROM users u
-JOIN user_roles ur ON ur.user_id = u.id
-JOIN roles r ON r.id = ur.role_id
+FROM hxn_user.users u
+JOIN hxn_user.user_roles ur ON ur.user_id = u.id
+JOIN hxn_user.roles r ON r.id = ur.role_id
 GROUP BY u.username;
 
+SHOW search_path;
+
+SELECT table_schema, table_name
+FROM information_schema.tables
+WHERE table_schema = current_schema()
+  AND table_type = 'BASE TABLE';
+
+  SELECT table_schema, table_name, privilege_type
+FROM information_schema.role_table_grants
+WHERE grantee = current_user
+  AND table_schema = current_schema();
