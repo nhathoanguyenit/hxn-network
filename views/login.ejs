@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>
+    <%= title %>
+  </title>
+  <link rel="stylesheet" href="/plugins/bootstrap/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/style.css" />
+  <script src="/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+</head>
+
+<body class="d-flex justify-content-center align-items-center vh-100 bg-light">
+  <div class="card shadow p-4" style="min-width: 300px; max-width: 400px">
+    <h3 class="text-center mb-3">Admin Login</h3>
+
+    <div id="error-alert" class="alert alert-danger d-none" role="alert"></div>
+
+    <form id="login-form" method="POST" action="/api/user-app/auth/login">
+      <div class="mb-3">
+        <input type="text" class="form-control" name="username" placeholder="Username" required />
+      </div>
+      <div class="mb-3">
+        <input type="password" class="form-control" name="password" placeholder="Password" required />
+      </div>
+      <input type="hidden" name="redirect" id="redirect" />
+      <button type="submit" class="btn btn-primary w-100">Login</button>
+    </form>
+  </div>
+
+  <script src="/plugins/crypto-js/crypto-js.js"></script>
+  <script>
+    const form = document.getElementById("login-form");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(form);
+
+      // Get username and password
+      const username = formData.get("username");
+      const password = formData.get("password");
+
+      // 🔒 Hash the password using SHA256
+      const hashedPassword = CryptoJS.SHA256(password).toString();
+
+      // Build the final payload (replace password with hashed)
+      const body = new URLSearchParams({
+        username,
+        password: hashedPassword,
+        redirect: formData.get("redirect"),
+      });
+
+      // Send to backend
+      try {
+        const res = await fetch(form.action, {
+          method: "POST",
+          body,
+          credentials: "include",
+          headers: { Accept: "application/json" },
+        });
+
+        if (res.ok) {
+          window.location.href = formData.get("redirect") || "/";
+        } else {
+          const data = await res.json().catch(() => ({}));
+          alert(data.message || "Invalid login");
+        }
+      } catch (err) {
+        alert("⚠️ Network error");
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+
+</html>

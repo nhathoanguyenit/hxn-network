@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>
+    <%= title %> | <%= appName %>
+  </title>
+  <link rel="stylesheet" href="/plugins/bootstrap/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/style.css" />
+
+  <script src="/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="/plugins/socket-io-client/socket.io.js"></script>
+  <script src="/plugins/socket-sdk/socket-sdk.js"></script>
+  <script src="/plugins/socket-sdk/socket-chat-gui.js"></script>
+  <script src="/plugins/chart-js/chart.umd.js"></script>
+  <script src="/plugins/axios/axios.min.js"></script>
+  <script src="/plugins/custom/table.js"></script>
+  <script src="/plugins/custom/modal.js"></script>
+  <style>
+    .admin-wrapper {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      grid-template-rows: auto 1fr auto;
+      grid-template-areas:
+        "sidebar header"
+        "sidebar content"
+        "sidebar footer";
+      height: 100vh;
+      background-color: var(--bs-light);
+    }
+
+    .admin-sidebar {
+      grid-area: sidebar;
+      background-color: var(--bs-primary);
+      color: var(--bs-light);
+      padding: 1rem;
+    }
+
+    .admin-header {
+      grid-area: header;
+      background-color: var(--bs-primary);
+      color: var(--bs-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .admin-content {
+      grid-area: content;
+      padding: 1.25rem;
+      overflow-y: auto;
+      background-color: var(--bs-light);
+    }
+
+    .admin-footer {
+      grid-area: footer;
+      color: var(--bs-light);
+      text-align: center;
+      padding: 0.5rem;
+      background-color: var(--bs-light);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="admin-wrapper">
+    <aside class="admin-sidebar">
+      <%- include('sidebar', { roles }) %>
+    </aside>
+    <header class="admin-header">
+      <%- include('header', { appName, roles }) %>
+    </header>
+
+    <main class="admin-content">
+      <%- include(page, { roles }) %>
+    </main>
+
+    <footer class="admin-footer">
+      <%- include('footer') %>
+    </footer>
+  </div>
+</body>
+
+</html>

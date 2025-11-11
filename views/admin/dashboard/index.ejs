@@ -1,0 +1,84 @@
+<div class="container-fluid">
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h6>Total Visits</h6>
+          <h3>150K</h3>
+          <small class="text-success">+10% since last month</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h6>Total Page Views</h6>
+          <h3>1.2M</h3>
+          <small class="text-danger">-7% since last month</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h6>Unique Visitors</h6>
+          <h3>450K</h3>
+          <small class="text-warning">-12% since last month</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h6>Bounce Rate</h6>
+          <h3>33%</h3>
+          <small class="text-info">Steady</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <h5 class="card-title mb-3">Monthly Stats</h5>
+      <canvas id="visitsChart" height="100"></canvas>
+      <script>
+        const ctx = document.getElementById("visitsChart");
+        new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: ["Jan", "Feb", "Mar", "Apr", "May"],
+            datasets: [{
+              label: "Visits",
+              data: [10, 25, 20, 35, 50],
+              borderColor: "#007bff",
+              backgroundColor: "rgba(0,123,255,0.1)",
+              fill: true,
+              tension: 0.3,
+            }, ],
+          },
+        });
+      </script>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h5 class="card-title mb-3">Todo List</h5>
+      <ul class="list-group">
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          Call John for dinner
+          <span class="badge bg-success">Done</span>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          Prepare report
+          <span class="badge bg-warning text-dark">Tomorrow</span>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          Book flight
+          <span class="badge bg-danger">3 mins left</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>

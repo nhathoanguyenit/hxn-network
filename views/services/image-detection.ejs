@@ -1,0 +1,207 @@
+<div class="container py-5">
+    <h1 class="mb-4">🧠 Image Detection</h1>
+
+    <form id="uploadForm" class="mb-4">
+        <div class="mb-3">
+            <input class="form-control bg-secondary text-light" type="file" id="imageInput" accept="image/*" required />
+        </div>
+
+        <div id="preview" class="mb-3" style="display:none; position:relative;">
+            <h5>Preview:</h5>
+            <img id="previewImg" src="" alt="Preview" class="img-fluid rounded shadow" style="max-width:400px;" />
+            <canvas id="overlay" style="position:absolute; top:0; left:0; pointer-events:none; z-index:5;"></canvas>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Detect</button>
+
+        <div id="labelEditor" class="mt-3" style="display:none;">
+            <h5>Edit Labels:</h5>
+            <div id="labelsContainer"></div>
+        </div>
+
+        <button id="trainBtn" class="btn btn-warning mt-3" style="display:none;">Train Model</button>
+
+        <div id="result" class="alert alert-info mt-3" style="display:none;">
+            <h5>Detection Result:</h5>
+            <pre id="resultText" class="mb-0"></pre>
+        </div>
+    </form>
+</div>
+
+<script>
+    const form = document.getElementById("uploadForm");
+    const imageInput = document.getElementById("imageInput");
+    const preview = document.getElementById("preview");
+    const previewImg = document.getElementById("previewImg");
+    const overlay = document.getElementById("overlay");
+    const result = document.getElementById("result");
+    const resultText = document.getElementById("resultText");
+    const trainBtn = document.getElementById("trainBtn");
+    const labelEditor = document.getElementById("labelEditor");
+    const labelsContainer = document.getElementById("labelsContainer");
+
+    let lastDetectionResult = null;
+
+    // Draw boxes on canvas
+    function drawBoxes(objects) {
+        const ctx = overlay.getContext("2d");
+        overlay.width = previewImg.clientWidth;
+        overlay.height = previewImg.clientHeight;
+        ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+        const scaleX = previewImg.clientWidth / previewImg.naturalWidth;
+        const scaleY = previewImg.clientHeight / previewImg.naturalHeight;
+
+        objects.forEach((obj, idx) => {
+            const [x1, y1, x2, y2] = obj.bbox;
+            const rectX = x1 * scaleX;
+            const rectY = y1 * scaleY;
+            const rectW = (x2 - x1) * scaleX;
+            const rectH = (y2 - y1) * scaleY;
+
+            ctx.strokeStyle = "rgba(0,255,0,0.8)";
+            ctx.lineWidth = 2;
+            ctx.strokeRect(rectX, rectY, rectW, rectH);
+
+            const label = obj.label;
+            ctx.font = "14px Arial";
+            const textWidth = ctx.measureText(label).width;
+            const textHeight = 16;
+
+            ctx.fillStyle = "rgba(0,255,0,0.7)";
+            ctx.fillRect(rectX, rectY - textHeight, textWidth + 6, textHeight);
+
+            ctx.fillStyle = "#000";
+            ctx.fillText(label, rectX + 3, rectY - textHeight + 2);
+        });
+    }
+
+    // Update label editor inputs
+    function renderLabelInputs(objects) {
+        labelsContainer.innerHTML = "";
+        console.log("renderLabelInputs", labelsContainer, objects)
+        objects.forEach((obj, idx) => {
+            const div = document.createElement("div");
+            div.className = "mb-2";
+            div.innerHTML = `
+            <label>Object ${idx + 1}:</label>
+            <input type="text" class="form-control form-control-sm" value="${obj.label}" data-index="${idx}" />
+        `;
+            labelsContainer.appendChild(div);
+        });
+        labelEditor.style.display = "block";
+    }
+
+    // Handle file preview
+    imageInput.addEventListener("change", () => {
+        const file = imageInput.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            previewImg.src = e.target.result;
+            preview.style.display = "block";
+            overlay.getContext("2d").clearRect(0, 0, overlay.width, overlay.height);
+            if (trainBtn) {
+                trainBtn.style.display = "none";
+                labelEditor.style.display = "none";
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // Detect objects
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const file = imageInput.files[0];
+        if (!file) return alert("Please select an image first.");
+
+        const reader = new FileReader();
+        reader.onload = async () => {
+            const base64 = reader.result.split(",")[1];
+            try {
+                const res = await fetch("/api/tool/image-detection/detect", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ image: base64 }),
+                });
+
+                const data = await res.json();
+                lastDetectionResult = data;
+                result.style.display = "block";
+                resultText.textContent = JSON.stringify(data, null, 2);
+
+
+                const drawAfterLoad = () => {
+                    if (previewImg.complete && previewImg.naturalWidth !== 0) {
+                        drawBoxes(data.objects || []);
+                        if (trainBtn) {
+                            renderLabelInputs(data.objects || []);
+                            trainBtn.style.display = "inline-block";
+                        }
+                    } else {
+                        previewImg.onload = () => {
+                            drawBoxes(data.objects || []);
+                            if (trainBtn) {
+                                renderLabelInputs(data.objects || []);
+                                trainBtn.style.display = "inline-block";
+                            }
+                        };
+                    }
+                };
+                drawAfterLoad();
+
+            } catch (err) {
+                result.style.display = "block";
+                resultText.textContent = "Error: " + err.message;
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // Train button
+    if (trainBtn) {
+        trainBtn.addEventListener("click", async () => {
+            if (!lastDetectionResult) return alert("No detection result to train from.");
+            if (!previewImg.src) return alert("No image loaded.");
+
+            // Update labels from user edits
+            const inputs = labelsContainer.querySelectorAll("input");
+            inputs.forEach(input => {
+                const idx = parseInt(input.dataset.index);
+                lastDetectionResult.objects[idx].label = input.value.trim() || "unknown";
+            });
+
+            trainBtn.disabled = true;
+            trainBtn.textContent = "Training...";
+
+            try {
+                // Get current image base64 data
+                const imageBase64 = previewImg.src;
+
+                const res = await fetch("/api/tool/image-detection/train", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        image: imageBase64,
+                        detections: lastDetectionResult.objects
+                    }),
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) throw new Error(data.detail || "Server error");
+
+                alert("✅ Training data saved successfully!");
+
+            } catch (err) {
+                alert("❌ Training failed: " + err.message);
+                console.error("Training error:", err);
+            } finally {
+                trainBtn.disabled = false;
+                trainBtn.textContent = "Train Model";
+            }
+        });
+    }
+
+</script>

@@ -1,0 +1,118 @@
+<section class="mt-4">
+  <h2 class="text-primary fw-bold mb-3">User Management</h2>
+
+  <div class="input-group mb-3">
+    <input type="text" id="searchKey" class="form-control" placeholder="Search..." />
+    <button class="btn btn-outline-primary" id="searchBtn">Search</button>
+  </div>
+
+  <div id="userTable" class="w-100" style="overflow-x: auto;"></div>
+  <div id="userTablePagination" class="mt-3 d-flex justify-content-center"></div>
+</section>
+
+<%- include('modals/edit') %>
+<%- include('modals/delete') %>
+
+<script>
+  const table = new CustomTable({
+    container: "#userTable",
+    pagination: "#userTablePagination",
+    className: "table table-striped table-hover align-middle",
+    endpoint: "/api/user-app/users/search",
+    limit: 10,
+    columns: [{
+        key: "username",
+        label: "Username",
+        width: "300px",
+        header: col => `<strong>${col.label}</strong>`
+      },
+      {
+        key: "fullname",
+        label: "Full Name",
+        width: "auto",
+      },
+      {
+        key: "roles",
+        label: "Roles",
+        width: "auto",
+        cell: row => row.roles?.map(r => `<span class="badge bg-primary text-light p-2">${r.name}</span>`).join("") || "-",
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        width: "200px",
+        cell: row => `
+          <button class="btn btn-sm btn-outline-info me-1" data-id="${row.id}" data-action="edit">Edit</button>
+          <button class="btn btn-sm btn-outline-danger" data-id="${row.id}" data-action="delete">Delete</button>
+        `
+      }
+    ],
+    emptyState: {
+      className: "text-center text-muted py-3",
+      text: "No data found"
+    }
+  });
+
+  document.getElementById('searchBtn').addEventListener('click', () => {
+    const key = document.getElementById('searchKey').value; // fixed id
+    table.searchKey = key;
+    table.page = 1;
+    table.fetchData();
+  });
+
+  const editModal = new CustomModal({
+    id: 'editUserModal',
+    onSubmit: async (e, modal) => {
+
+      const data = modal.getFormData();
+      const id = data.id;
+
+      try {
+        await axios.patch(`/api/user-app/users/${id}`, {
+          fullname: data.fullname,
+        });
+        modal.hide();
+        table.fetchData();
+      } catch (err) {
+        console.error(err);
+        alert("Failed to update user.");
+      }
+    },
+    onClose: (modal) => modal.resetForm()
+  });
+
+
+  const deleteModal = new CustomModal({
+    id: 'deleteUserModal',
+    onSubmit: async (e, modal) => {
+      const data = modal.getFormData();
+      const id = data.id;
+      try {
+        await axios.delete(`/api/user-app/users/${id}`);
+        modal.hide();
+        table.fetchData();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  });
+
+  table.container.addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    const action = btn.dataset.action;
+
+    if (action === 'edit') {
+      axios.get(`/api/user-app/users/${id}`)
+        .then(res => {
+          editModal.fillForm(res.data.data);
+          editModal.show();
+        });
+    } else if (action === 'delete') {
+      console.log(id)
+      deleteModal.fillForm({id: id});
+      deleteModal.show();
+    }
+  });
+</script>
