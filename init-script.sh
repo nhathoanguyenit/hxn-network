@@ -66,3 +66,6 @@ nest g module services
 nest g service services --no-spec
 nest g controller services --no-spec
 
+nest g module games
+nest g service games --no-spec
+nest g controller games --no-spec

@@ -14,7 +14,6 @@ export class AdminController {
   @UseGuards(JwtGuard)
   @Roles(RoleEnum.ADMIN)
   adminPage(@Req() req: Request, @HttpAuth() user: AuthUser) {
-    console.log(user.roles)
     return {
       appName: this.adminService.getAppName(),
       title: "Admin",

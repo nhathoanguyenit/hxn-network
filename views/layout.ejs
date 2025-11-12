@@ -1,75 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8" />
-        <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" /> -->
-        <title><%= title %></title>
 
-        <link rel="stylesheet" href="/plugins/bootstrap/css/bootstrap.min.css" />
-        <link rel="stylesheet" href="/assets/css/theme.css" />
-        <link rel="stylesheet" href="/assets/css/style.css" />
+<head>
+  <meta charset="utf-8" />
+  <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" /> -->
+  <title>
+    <%= title %>
+  </title>
 
-        <script src="/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
-        <script src="/plugins/socket-io-client/socket.io.js"></script>
-        <script src="/plugins/socket-sdk/socket-sdk.js"></script>
-        <script src="/plugins/socket-sdk/socket-chat-gui.js"></script>
-    </head>
+  <link rel="stylesheet" href="/plugins/bootstrap/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="/assets/css/theme.css" />
+  <link rel="stylesheet" href="/assets/css/style.css" />
 
-    <body class="bg-dark text-light"s>
-        <%- include('header') %>
-        <div  style="min-height: 100vh">
-            <%- include(page) %> 
-        </div>
-        <%- include('footer') %>
-    </body>
+  <script src="/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+  <script src="/plugins/socket-io-client/socket.io.js"></script>
+  <script src="/plugins/socket-sdk/socket-sdk.js"></script>
+  <script src="/plugins/socket-sdk/socket-chat-gui.js"></script>
+</head>
 
-    <script>
-        let chatGui = null;
-        const sdk = new SocketSDK("/", {});
-        const pingDisplay = document.getElementById("ping");
+<body class="bg-dark text-light" s>
+  <%- include('header') %>
+  <div style="min-height: 100vh">
+    <%- include(page) %>
+  </div>
+  <%- include('footer') %>
+</body>
 
-        function updatePingColor(latency) {
-            if (latency < 80) pingDisplay.style.color = "#00FF00";
-            else if (latency < 150) pingDisplay.style.color = "#FFD700";
-            else pingDisplay.style.color = "#FF4500";
-        }
+<% if(user) { %>
+<script>
+  (() => {
+    const chatGui = new SocketChatGUI({
+      namespace: "/chat",
+      withCredentials: true
+    });
+  })()
+</script>
+<% } %>
 
-        sdk.connect()
-            .then(async () => {
-                console.log("✅ Connected to App Gateway");
-
-                sdk.on("authenticated", (data) => {
-                    console.log("👤 Authenticated as:", data.user);
-                    initChat(data.user);
-                });
-
-                // const pingLoop = async () => {
-                //     const start = Date.now();
-                //     try {
-                //         const data = await sdk.emit("ping", { clientTime: start }, 5000, "pong");
-                //         const latency = Date.now() - start;
-                //         updatePingColor(latency);
-                //         pingDisplay.textContent = `${latency} ms`;
-                //     } catch {
-                //         pingDisplay.textContent = `999 ms`;
-                //         pingDisplay.style.color = "#FF0000";
-                //     }
-                // };
-
-                initChat();
-            })
-            .catch((err) => {
-                console.error("❌ Socket connection failed:", err);
-                updatePingColor(999);
-                pingDisplay.textContent = `999 ms`;
-            });
-
-        async function initChat() {
-
-            const chatGui = new SocketChatGUI({
-                namespace: "/chat",
-                withCredentials: true
-            });
-        }
-    </script>
 </html>

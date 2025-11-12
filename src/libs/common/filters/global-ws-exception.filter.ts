@@ -7,6 +7,6 @@ export class GlobalWsExceptionFilter implements WsExceptionFilter {
   catch(exception: WsException, host: ArgumentsHost) {
     const client = host.switchToWs().getClient();
     const message = exception.message || "Internal error";
-    client.emit("ack", Ack.fail(message));
+    client.emit("ack", Ack.error(message));
   }
 }

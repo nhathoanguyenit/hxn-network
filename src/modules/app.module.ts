@@ -2,13 +2,14 @@ import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { JwtModule } from "@nestjs/jwt";
-import { FileAppModule } from "./file-app/file-app.module";
-import { UserAppModule } from "./user-app/user-app.module";
-import { ChatAppModule } from "./chat-app/chat-app.module";
-import { ToolAppModule } from "./tool-app/tool-app.module";
+import { FileModule } from "./file/file.module";
+import { UserModule } from "./user/user.module";
+import { ChatModule } from "./chat/chat.module";
+import { ToolModule } from "./tool/tool.module";
 import { WebAppModule } from "./web-app/web-app.module";
-import * as chatEntities from "./chat-app/chat-app.entities";
-import * as userEntities from "./user-app/user-app.entities";
+import * as chatEntities from "./chat/chat.entities";
+import * as userEntities from "./user/user.entities";
+import { PinyinModule } from "./pinyin/pinyin.module";
 
 @Module({
   imports: [
@@ -35,11 +36,12 @@ import * as userEntities from "./user-app/user-app.entities";
       secret: process.env.JWT_SECRET || "app_jwt_secret",
       signOptions: { expiresIn: "365d" },
     }),
-    FileAppModule,
-    ChatAppModule,
-    UserAppModule,
-    ToolAppModule,
+    FileModule,
+    ChatModule,
+    UserModule,
+    ToolModule,
     WebAppModule,
+    PinyinModule,
   ],
 })
 export class AppModule {}

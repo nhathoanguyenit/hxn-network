@@ -42,6 +42,33 @@ export class WebAppController {
     };
   }
 
+  @Get("/loginAsGuest")
+  @Render("layout")
+  @UseGuards(OptionalJwtGuard)
+  async loginAsGuest(@Req() req: Request, @Res() res: Response, @HttpAuth() user: AuthUser) {
+    const uid = await UUID.random();
+    const guestName = `Guest_${CryptoHelper.hashMd5(uid).slice(0, 11)}`;
+    if (!user) {
+      const payload = {
+        sub: uid,
+        type: "GUEST",
+        fullname: guestName,
+        user,
+      };
+
+      const { accessToken } = await this.webAppService.generateGuestJwt(payload);
+
+      res.cookie("jwt", accessToken, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: false,
+        path: "/",
+      });
+    }
+
+    res.redirect("/");
+  }
+
   @Get(["about", "contact"])
   @Render("layout")
   @UseGuards(OptionalJwtGuard)

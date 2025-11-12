@@ -9,7 +9,7 @@ export class Ack {
       };
     }
   
-    static fail(message: string, data?: any) {
+    static error(message: string, data?: any) {
       return {
         ok: false,
         message,

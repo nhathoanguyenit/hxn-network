@@ -1,0 +1,76 @@
+<h2>🎮 Pinyin Game Demo</h2>
+<p>Use <b>WASD</b> or arrow keys to move, <b>Space</b> to drop bomb</p>
+<div id="game"></div>
+
+<script>
+  const socket = io('/pinyin', {
+    withCredentials: true,
+    query: { room: 'default' }
+  });
+
+  const gameEl = document.getElementById('game');
+  const gridSize = 10;
+  let players = [];
+  let bombs = [];
+
+  // Render grid
+  function render() {
+    gameEl.innerHTML = '';
+    for (let y = 0; y < gridSize; y++) {
+      for (let x = 0; x < gridSize; x++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+
+        const player = players.find(p => p.x === x && p.y === y);
+        const bomb = bombs.find(b => b.x === x && b.y === y);
+
+        if (bomb) cell.classList.add('bomb');
+        if (player) cell.classList.add(player.isSelf ? 'self' : 'player');
+
+        gameEl.appendChild(cell);
+      }
+    }
+  }
+
+  socket.on('connect', () => {
+    console.log('✅ Connected to game server');
+  });
+
+  socket.on('players', (list) => {
+    players = list.map(p => ({ ...p, isSelf: p.id === socket.id }));
+    render();
+  });
+
+  socket.on('playerMoved', ({ userId, x, y }) => {
+    const p = players.find(p => p.userId === userId);
+    if (p) {
+      p.x = x; p.y = y;
+      render();
+    }
+  });
+
+  socket.on('bombDropped', (bomb) => {
+    bombs.push(bomb);
+    render();
+    setTimeout(() => {
+      bombs = bombs.filter(b => b.id !== bomb.id);
+      render();
+    }, 3000);
+  });
+
+  // Movement controls
+  document.addEventListener('keydown', (e) => {
+    const me = players.find(p => p.isSelf);
+    if (!me) return;
+    let { x, y } = me;
+    if (e.key === 'ArrowUp' || e.key === 'w') y = Math.max(0, y - 1);
+    if (e.key === 'ArrowDown' || e.key === 's') y = Math.min(gridSize - 1, y + 1);
+    if (e.key === 'ArrowLeft' || e.key === 'a') x = Math.max(0, x - 1);
+    if (e.key === 'ArrowRight' || e.key === 'd') x = Math.min(gridSize - 1, x + 1);
+    if (e.code === 'Space') {
+      socket.emit('dropBomb');
+      return;
+    }
+    socket.emit('move', { x, y });
+  });
+</script>

@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { WebAppService } from './web-app.service';
 import { WebAppController } from './web-app.controller';
-import { UserAppModule } from '@modules/user-app/user-app.module';
 import { AdminModule } from './admin/admin.module';
 import { ServicesModule } from './services/services.module';
+import { GamesModule } from './games/games.module';
 
 @Module({
-  imports: [UserAppModule, AdminModule, ServicesModule],
+  imports: [ AdminModule, ServicesModule, GamesModule],
   providers: [WebAppService],
   controllers: [WebAppController]
 })
