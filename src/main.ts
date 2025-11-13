@@ -21,6 +21,8 @@ async function bootstrap() {
 
     app.use("/assets", express.static(join(__dirname, "..", "assets")));
     app.use("/plugins/bootstrap", express.static(join(__dirname, "..", "node_modules/bootstrap/dist")));
+    app.use("/plugins/pinyin",express.static(join(__dirname, "..", "plugins/pinyin")));
+    app.use("/plugins/three",express.static(join(__dirname, "..", "plugins/three")));
     app.use("/plugins/crypto-js", express.static(join(__dirname, "..", "node_modules/crypto-js")));
     app.use("/plugins/socket-sdk", express.static(join(__dirname, "..", "plugins/socket-sdk")));
     app.use("/plugins/socket-io-client", express.static(join(__dirname, "..", "node_modules/socket.io-client/dist")));
