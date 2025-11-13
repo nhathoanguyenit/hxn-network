@@ -81,8 +81,6 @@ export class PinyinSocketGateway implements OnGatewayConnection, OnGatewayDiscon
       const player = this.pinyinService.getPlayer(client.id);
       if (!player) throw new Error("Player not found");
 
-      // Convert key to direction
-      // (e.g., arrow keys from browser: 37=left, 38=up, 39=right, 40=down)
       const keyMap: Record<number, "up" | "down" | "left" | "right"> = {
         37: "left",
         38: "up",
@@ -94,8 +92,7 @@ export class PinyinSocketGateway implements OnGatewayConnection, OnGatewayDiscon
       if (!direction) throw new Error("Invalid key");
 
       this.pinyinService.movePlayer(client.id, direction);
-
-      // Notify players in same room
+  
       this.server.to(player.room).emit("players", this.pinyinService.getPlayers(player.room));
 
       return Ack.ok();
@@ -111,11 +108,9 @@ export class PinyinSocketGateway implements OnGatewayConnection, OnGatewayDiscon
     try {
       const bomb = this.pinyinService.dropBomb(client.id);
       if (!bomb) throw new Error("Unable to drop bomb");
-
-      // Broadcast bomb drop
+      
       this.server.to(bomb.room).emit("bombDropped", bomb);
 
-      // Schedule explosion after 3s
       setTimeout(() => {
         this.pinyinService.explodeBomb(bomb);
         this.server.to(bomb.room).emit("bombExploded", {
