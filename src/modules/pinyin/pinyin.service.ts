@@ -22,6 +22,7 @@ interface Bomb {
 export class PinyinService {
   private players: Map<string, Player> = new Map();
   private bombs: Bomb[] = [];
+  private gridSize = 50;
 
   getPlayer(id: string) {
     return this.players.get(id);
@@ -32,8 +33,8 @@ export class PinyinService {
       id: clientId,
       userId,
       room,
-      x: Math.floor(Math.random() * 10),
-      y: Math.floor(Math.random() * 10),
+      x: Math.floor(Math.random() * this.gridSize),
+      y: Math.floor(Math.random() * this.gridSize),
       alive: true,
     };
     this.players.set(clientId, player);
@@ -50,15 +51,14 @@ export class PinyinService {
 
   movePlayer(clientId: string, direction: 'up' | 'down' | 'left' | 'right') {
     const player = this.players.get(clientId);
-    console.log(player)
     if (!player || !player.alive) return null;
 
-    const gridSize = 10;
+
     switch (direction) {
       case 'up': player.y = Math.max(0, player.y - 1); break;
-      case 'down': player.y = Math.min(gridSize - 1, player.y + 1); break;
+      case 'down': player.y = Math.min(this.gridSize - 1, player.y + 1); break;
       case 'left': player.x = Math.max(0, player.x - 1); break;
-      case 'right': player.x = Math.min(gridSize - 1, player.x + 1); break;
+      case 'right': player.x = Math.min(this.gridSize - 1, player.x + 1); break;
     }
 
     return player;
@@ -83,13 +83,12 @@ export class PinyinService {
 
   explodeBomb(bomb: Bomb) {
     const radius = 1;
-    const gridSize = 10;
     const area = [{ x: bomb.x, y: bomb.y }];
 
     for (let i = 1; i <= radius; i++) {
-      if (bomb.x + i < gridSize) area.push({ x: bomb.x + i, y: bomb.y });
+      if (bomb.x + i < this.gridSize) area.push({ x: bomb.x + i, y: bomb.y });
       if (bomb.x - i >= 0) area.push({ x: bomb.x - i, y: bomb.y });
-      if (bomb.y + i < gridSize) area.push({ x: bomb.x, y: bomb.y + i });
+      if (bomb.y + i < this.gridSize) area.push({ x: bomb.x, y: bomb.y + i });
       if (bomb.y - i >= 0) area.push({ x: bomb.x, y: bomb.y - i });
     }
 
@@ -113,8 +112,8 @@ export class PinyinService {
     if (!player) return null;
 
     player.alive = true;
-    player.x = Math.floor(Math.random() * 10);
-    player.y = Math.floor(Math.random() * 10);
+    player.x = Math.floor(Math.random() * 50);
+    player.y = Math.floor(Math.random() * 50);
 
     return player;
   }
