@@ -114,6 +114,23 @@
       else respawnBtn.style.display = 'none';
     }
 
+    function sendPing() {
+      const start = Date.now();
+      socket.emit('ping');
+      socket.once('pong', (data) => {
+        const latency = Date.now() - start;
+        document.getElementById('pingDisplay').textContent = `Ping: ${latency}ms`;
+      });
+    }
+
+    const pingEl = document.createElement('div');
+    pingEl.id = 'pingDisplay';
+    pingEl.style.margin = '10px';
+    pingEl.style.fontWeight = 'bold';
+    document.body.appendChild(pingEl);
+
+    setInterval(sendPing, 2000);
+
     socket.on('connect', () => console.log('✅ Connected to game server'));
 
     socket.on('players', (list) => {

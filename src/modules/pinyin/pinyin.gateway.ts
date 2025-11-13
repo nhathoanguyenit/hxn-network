@@ -137,4 +137,10 @@ export class PinyinSocketGateway implements OnGatewayConnection, OnGatewayDiscon
     this.server.to(player.room).emit('players', this.pinyinService.getPlayers(player.room));
     return Ack.ok();
   }
+
+  @UseGuards(WsJwtGuard)
+  @SubscribeMessage('ping')
+  handlePing(@ConnectedSocket() client: Socket & { user: any }) {
+    client.emit('pong', { time: Date.now() });
+  }
 }
