@@ -17,12 +17,11 @@ export function updatePlayers(scene, players) {
 
   players.forEach(p => {
     let mesh = playerMeshes.get(p.id);
-    console.log(mesh)
     if (!mesh) {
       mesh = new THREE.Mesh(playerGeometry, p.isSelf ? playerMaterialSelf : playerMaterialOther);
       scene.add(mesh);
       playerMeshes.set(p.id, mesh);
     }
-    mesh.position.set(p.x, 1,  p.y);
+    mesh.position.set(p.x-25, 1,  p.y-25);
   });
 }

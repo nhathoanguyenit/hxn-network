@@ -19,14 +19,14 @@ export class GamesController {
     };
   }
 
-  @Get("pinyin/models")
+  @Get("pinyin/models/player")
   @Render("games/layout")
   @UseGuards(JwtGuard)
   pinyinModelPage(@Req() req: Request, @HttpAuth() user: AuthUser) {
     return {
       appName: this.gamesService.getAppName(),
       title: "Pinyin",
-      page: "pinyin/models/index",
+      page: "pinyin/models/player/index",
       user,
     };
   }

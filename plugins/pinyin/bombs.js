@@ -25,6 +25,8 @@ export function loadBombTemplate(path) {
 export function updateBombs(scene, bombs) {
   bombMeshes.forEach((mesh, id) => {
     if (!bombs.find(b => b.id === id)) {
+      const pos = mesh.position.clone();
+      createCrossFire(pos, scene, 3); 
       scene.remove(mesh);
       bombMeshes.delete(id);
     }
@@ -33,7 +35,7 @@ export function updateBombs(scene, bombs) {
   bombs.forEach(bomb => {
     if (!bombMeshes.has(bomb.id) && bombTemplate) {
       const mesh = bombTemplate.clone();
-      mesh.position.set(bomb.x + 0.5, 0.5, bomb.y + 0.5);
+      mesh.position.set(bomb.x - 25, 1, bomb.y - 25);
       scene.add(mesh);
       bombMeshes.set(bomb.id, mesh);
     }
@@ -46,3 +48,45 @@ export function animateBombs() {
     mesh.position.y = 0.5 + Math.sin(Date.now() * 0.005) * 0.05;
   });
 }
+
+function createCrossFire(position, scene, range = 3) {
+  const group = new THREE.Group();
+
+  const material = new THREE.MeshBasicMaterial({
+    color: 0xff6600,
+    transparent: true,
+    opacity: 0.9
+  });
+  
+  const geometry = new THREE.BoxGeometry(0.8, 0.8, 0.8);
+
+  const center = new THREE.Mesh(geometry, material.clone());
+  center.position.copy(position);
+  group.add(center);
+
+  const directions = [
+    new THREE.Vector3(1, 0, 0),
+    new THREE.Vector3(-1, 0, 0),
+    new THREE.Vector3(0, 0, 1),
+    new THREE.Vector3(0, 0, -1)
+  ];
+
+  for (const dir of directions) {
+    for (let i = 1; i <= range; i++) {
+      const flame = new THREE.Mesh(geometry, material.clone());
+      flame.position.copy(position).addScaledVector(dir, i);
+      group.add(flame);
+    }
+  }
+
+  scene.add(group);
+
+  setTimeout(() => {
+    scene.remove(group);
+    group.traverse(obj => {
+      if (obj.geometry) obj.geometry.dispose();
+      if (obj.material) obj.material.dispose();
+    });
+  }, 500);
+}
+
