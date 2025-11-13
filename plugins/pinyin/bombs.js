@@ -1,24 +1,32 @@
 import * as THREE from '/plugins/three/build/three.module.js';
-import { OBJLoader } from '/plugins/three/examples/jsm/loaders/OBJLoader.js';
+import { GLTFLoader } from '/plugins/three/examples/jsm/loaders/GLTFLoader.js';
 
 export const bombMeshes = new Map();
 export let bombTemplate = null;
 
 export function loadBombTemplate(path) {
   return new Promise((resolve, reject) => {
-    const loader = new OBJLoader();
-    loader.load(path, obj => {
-      const box = new THREE.Box3().setFromObject(obj);
-      const center = box.getCenter(new THREE.Vector3());
-      obj.position.sub(center);
+    const loader = new GLTFLoader();
+    loader.load(
+      path,
+      gltf => {
+        const obj = gltf.scene;
 
-      const group = new THREE.Group();
-      group.add(obj);
-      group.scale.set(0.5, 0.5, 0.5);
+        const box = new THREE.Box3().setFromObject(obj);
+        const center = box.getCenter(new THREE.Vector3());
+        obj.position.sub(center);
+        obj.position.y += 1.5;
 
-      bombTemplate = group;
-      resolve(group);
-    }, undefined, reject);
+        const group = new THREE.Group();
+        group.add(obj);
+        group.scale.set(1, 1, 1);
+
+        bombTemplate = group;
+        resolve(group);
+      },
+      undefined,
+      reject
+    );
   });
 }
 

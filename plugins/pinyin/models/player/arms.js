@@ -10,7 +10,7 @@ export function createArms(clothColor) {
   // Left arm
   const upperArmL = new THREE.Mesh(upperArmGeo, armMat);
   const lowerArmL = new THREE.Mesh(lowerArmGeo, armMat);
-  upperArmL.position.set(-0.6, 1.75, 0);
+  upperArmL.position.set(-0.5, 1.85, -0.05);
   upperArmL.rotation.z = -0.5;
   lowerArmL.position.set(0, -0.325, 0.035);
   lowerArmL.rotation.x = -0.3;
@@ -22,7 +22,7 @@ export function createArms(clothColor) {
   // Right arm
   const upperArmR = new THREE.Mesh(upperArmGeo, armMat);
   const lowerArmR = new THREE.Mesh(lowerArmGeo, armMat);
-  upperArmR.position.set(0.6, 1.75, 0);
+  upperArmR.position.set(0.5, 1.85, -0.05);
   upperArmR.rotation.z = 0.5;
   lowerArmR.position.set(0, -0.325, 0.035);
   lowerArmR.rotation.x = -0.3;

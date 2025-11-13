@@ -1,5 +1,5 @@
 import { createScene } from './scene.js';
-import { updatePlayers } from './players.js';
+import { loadPlayerTemplate, updatePlayers, animatePlayers } from './players.js';
 import { loadBombTemplate, updateBombs, animateBombs } from './bombs.js';
 import { setupControls } from './controls.js';
 
@@ -13,13 +13,15 @@ let bombs = [];
 
 const { scene, camera, renderer, controls } = createScene(gridSize, gameEl);
 
-await loadBombTemplate('/plugins/pinyin/models/player.obj');
+await loadPlayerTemplate('/plugins/pinyin/models/player.gltf');
+await loadBombTemplate('/plugins/pinyin/models/player.gltf');
 
 function animate() {
   requestAnimationFrame(animate);
   controls.target.set(0, 0, 0);
   controls.update();
   animateBombs();
+  animatePlayers();
   renderer.render(scene, camera);
 }
 animate();
