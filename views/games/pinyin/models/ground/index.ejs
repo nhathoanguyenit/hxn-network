@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Three.js Math Function Surface</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+  <script type="module">
+    import * as THREE from '/plugins/three/build/three.module.js';
+    import {
+      OrbitControls
+    } from '/plugins/three/examples/jsm/controls/OrbitControls.js';
+
+    // ------------------------------------------------------
+    // Scene + Camera
+    // ------------------------------------------------------
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x111111);
+
+    const camera = new THREE.PerspectiveCamera(
+      45,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+    );
+    camera.position.set(0, -6, 5);
+
+    // ------------------------------------------------------
+    // Renderer
+    // ------------------------------------------------------
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // ------------------------------------------------------
+    // Controls
+    // ------------------------------------------------------
+    const controls = new OrbitControls(camera, renderer.domElement);
+
+    // ------------------------------------------------------
+    // Create Geometry From Math Function
+    // Example: z = sin(x) * cos(y)
+    // ------------------------------------------------------
+    const geometry = new THREE.BufferGeometry();
+    const positions = [];
+    const colors = [];
+
+    const size = 100;
+    const step = 0.1;
+
+    for (let ix = -size; ix <= size; ix++) {
+      for (let iy = -size; iy <= size; iy++) {
+        const x = ix * step;
+        const y = iy * step;
+        const z = Math.sin(x) * Math.cos(y);
+
+        positions.push(x, y, z);
+
+        // Add color based on height
+        const color = new THREE.Color().setHSL(
+          0.6 + z * 0.1,
+          1.0,
+          0.5
+        );
+        colors.push(color.r, color.g, color.b);
+      }
+    }
+
+    geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+    geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+
+    // Point cloud material
+    const material = new THREE.PointsMaterial({
+      size: 0.05,
+      vertexColors: true,
+    });
+
+    const points = new THREE.Points(geometry, material);
+    scene.add(points);
+
+    // ------------------------------------------------------
+    // Animation Loop
+    // ------------------------------------------------------
+    function animate() {
+      requestAnimationFrame(animate);
+      points.rotation.z += 0.002;
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // Resize Handler
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+
+</html>

@@ -32,7 +32,6 @@ function render() {
 }
 
 socket.on('players', list => {
-  console.log(list)
   players = list.map(p => ({ ...p, isSelf: p.id === socket.id }));
   render();
 });

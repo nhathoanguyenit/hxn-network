@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>3D Oval + 2D Projections + Material</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      flex-wrap: wrap;
+      background: #111;
+      color: white;
+      font-family: sans-serif;
+    }
+
+    canvas {
+      border: 1px solid #444;
+      margin: 5px;
+    }
+
+    #ui {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+    }
+
+    #ui label {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    #info {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      color: white;
+      font-family: sans-serif;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="ui">
+    <label>PC1 <input id="p1" type="range" min="-2" max="2" step="0.01" value="0"></label>
+    <label>PC2 <input id="p2" type="range" min="-2" max="2" step="0.01" value="0"></label>
+    <label>PC3 <input id="p3" type="range" min="-2" max="2" step="0.01" value="0"></label>
+  </div>
+
+  <!-- Canvases -->
+  <canvas id="canvas3d" width="400" height="400"></canvas>
+  <canvas id="canvas3d-material" width="400" height="400"></canvas>
+  <canvas id="canvasXY" width="200" height="200"></canvas>
+  <canvas id="canvasXZ" width="200" height="200"></canvas>
+  <canvas id="canvasYZ" width="200" height="200"></canvas>
+
+  <div id="info"></div>
+
+  <script type="module">
+    import * as THREE from '/plugins/three/build/three.module.js';
+    import {
+      OrbitControls
+    } from '/plugins/three/examples/jsm/controls/OrbitControls.js';
+
+    function createAxes(length = 1) {
+      const axes = new THREE.Group();
+
+      // X axis - red
+      const xMat = new THREE.LineBasicMaterial({
+        color: 0xff0000
+      });
+      const xGeom = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(length, 0, 0)]);
+      axes.add(new THREE.Line(xGeom, xMat));
+
+      // Y axis - green
+      const yMat = new THREE.LineBasicMaterial({
+        color: 0x00ff00
+      });
+      const yGeom = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, length, 0)]);
+      axes.add(new THREE.Line(yGeom, yMat));
+
+      // Z axis - blue
+      const zMat = new THREE.LineBasicMaterial({
+        color: 0x0000ff
+      });
+      const zGeom = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, length)]);
+      axes.add(new THREE.Line(zGeom, zMat));
+
+      return axes;
+    }
+
+
+    // ------------------- Scene and Cameras -------------------
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x111111);
+
+    const canvas3d = document.getElementById("canvas3d");
+    const renderer3d = new THREE.WebGLRenderer({
+      canvas: canvas3d,
+      antialias: true
+    });
+    renderer3d.setSize(canvas3d.width, canvas3d.height);
+
+    const camera3d = new THREE.PerspectiveCamera(60, canvas3d.width / canvas3d.height, 0.1, 100);
+    camera3d.position.set(2, 2, 4);
+    const controls = new OrbitControls(camera3d, renderer3d.domElement);
+
+    const cameraXY = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
+    cameraXY.position.set(0, 0, 2);
+    cameraXY.up.set(0, 1, 0);
+    cameraXY.lookAt(0, 0, 0);
+
+    const cameraXZ = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
+    cameraXZ.position.set(0, 2, 0);
+    cameraXZ.up.set(0, 0, -1);
+    cameraXZ.lookAt(0, 0, 0);
+
+    const cameraYZ = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
+    cameraYZ.position.set(2, 0, 0);
+    cameraYZ.up.set(0, 1, 0);
+    cameraYZ.lookAt(0, 0, 0);
+
+    const rendererXY = new THREE.WebGLRenderer({
+      canvas: document.getElementById("canvasXY")
+    });
+    rendererXY.setSize(200, 200);
+    const rendererXZ = new THREE.WebGLRenderer({
+      canvas: document.getElementById("canvasXZ")
+    });
+    rendererXZ.setSize(200, 200);
+    const rendererYZ = new THREE.WebGLRenderer({
+      canvas: document.getElementById("canvasYZ")
+    });
+    rendererYZ.setSize(200, 200);
+
+    // ------------------- Material canvas -------------------
+    const canvas3dMat = document.getElementById("canvas3d-material");
+    const renderer3dMat = new THREE.WebGLRenderer({
+      canvas: canvas3dMat,
+      antialias: true
+    });
+    renderer3dMat.setSize(canvas3dMat.width, canvas3dMat.height);
+
+    const camera3dMat = new THREE.PerspectiveCamera(60, canvas3dMat.width / canvas3dMat.height, 0.1, 100);
+    camera3dMat.position.set(2, 2, 4);
+    const controlsMat = new OrbitControls(camera3dMat, renderer3dMat.domElement);
+
+    const sceneMat = new THREE.Scene();
+    sceneMat.background = new THREE.Color(0x111111);
+    sceneMat.add(new THREE.AmbientLight(0xffffff, 0.5));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight.position.set(5, 5, 5);
+    sceneMat.add(dirLight);
+
+    // ------------------- Oval Mean + PCA -------------------
+    const mean = [];
+    const rx0 = 0.6,
+      ry0 = 0.66,
+      rz0 = 0.6;
+    const latSteps = 16,
+      lonSteps = 16;
+
+    for (let i = 0; i <= latSteps; i++) {
+      const theta = (i / latSteps) * Math.PI;
+      const sinTheta = Math.sin(theta),
+        cosTheta = Math.cos(theta);
+
+      let a = 1;
+      if (theta < Math.PI / 3) a += 0.05;
+      else if (theta < 2 * Math.PI / 3) a += 0.02;
+      else a -= 0.01;
+
+      for (let j = 0; j < lonSteps; j++) {
+        const phi = (j / lonSteps) * 2 * Math.PI;
+        const sinPhi = Math.sin(phi),
+          cosPhi = Math.cos(phi);
+
+        mean.push(
+          rx0 * a * sinTheta * cosPhi,
+          ry0 * a * cosTheta,
+          rz0 * a * sinTheta * sinPhi
+        );
+      }
+    }
+
+    // PCA components
+    const pcs = [];
+    pcs.push(mean.map((v, i) => i % 3 === 0 ? 0.2 * v : 0));
+    pcs.push(mean.map((v, i) => i % 3 === 1 ? -0.1 * v : 0));
+    pcs.push(mean.map((v, i) => i % 3 === 2 ? 0.2 * Math.sin(mean[i - 1] * 2 * Math.PI) : 0));
+
+    const infoDiv = document.getElementById("info");
+    const numVertices = mean.length / 3;
+    let html = `<strong>Vertices:</strong> ${numVertices}<br><strong>PCA components:</strong> ${pcs.length}<br>`;
+    pcs.forEach((pc, i) => html += `Component ${i+1}: ${pc.length/3} vertices<br>`);
+    infoDiv.innerHTML = html;
+
+    // ------------------- Geometry -------------------
+    const geometry = new THREE.BufferGeometry();
+    let positions = new Float32Array(mean);
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+    const indices = [];
+    for (let i = 0; i < latSteps; i++) {
+      for (let j = 0; j < lonSteps; j++) {
+        const a = i * lonSteps + j;
+        const b = a + lonSteps;
+        let c = b + 1,
+          d = a + 1;
+        if (j === lonSteps - 1) {
+          c -= lonSteps;
+          d -= lonSteps;
+        }
+        indices.push(a, b, d);
+        indices.push(b, c, d);
+      }
+    }
+    geometry.setIndex(indices);
+
+
+    // ------------------- Meshes -------------------
+    const material = new THREE.MeshBasicMaterial({
+      color: 0x44ffcc,
+      wireframe: true
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+
+    const materialMat = new THREE.MeshStandardMaterial({
+      color: 0xfad5d2,
+      metalness: 0.5,
+      roughness: 0.4
+    });
+    const meshMat = new THREE.Mesh(geometry, materialMat);
+    sceneMat.add(meshMat);
+
+    const axes1 = createAxes(1);
+    scene.add(axes1);
+
+    const axes2 = createAxes(1);
+    sceneMat.add(axes2);
+
+    function updateOval() {
+      const a1 = parseFloat(document.getElementById("p1").value);
+      const a2 = parseFloat(document.getElementById("p2").value);
+      const a3 = parseFloat(document.getElementById("p3").value);
+      for (let i = 0; i < mean.length; i++) {
+        positions[i] = mean[i] + a1 * pcs[0][i] + a2 * pcs[1][i] + a3 * pcs[2][i];
+      }
+      geometry.attributes.position.needsUpdate = true;
+    }
+
+    ['p1', 'p2', 'p3'].forEach(id => document.getElementById(id).addEventListener('input', updateOval));
+
+    // ------------------- Animation -------------------
+    function animate() {
+      requestAnimationFrame(animate);
+      updateOval();
+      renderer3d.render(scene, camera3d);
+      rendererXY.render(scene, cameraXY);
+      rendererXZ.render(scene, cameraXZ);
+      rendererYZ.render(scene, cameraYZ);
+      renderer3dMat.render(sceneMat, camera3dMat);
+    }
+    animate();
+
+    // ------------------- Resize -------------------
+    window.addEventListener('resize', () => {
+      renderer3d.setSize(canvas3d.width, canvas3d.height);
+      rendererXY.setSize(200, 200);
+      rendererXZ.setSize(200, 200);
+      rendererYZ.setSize(200, 200);
+      renderer3dMat.setSize(canvas3dMat.width, canvas3dMat.height);
+      camera3d.aspect = canvas3d.width / canvas3d.height;
+      camera3d.updateProjectionMatrix();
+      camera3dMat.aspect = canvas3dMat.width / canvas3dMat.height;
+      camera3dMat.updateProjectionMatrix();
+    });
+  </script>
+</body>
+
+</html>

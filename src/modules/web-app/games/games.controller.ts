@@ -30,4 +30,16 @@ export class GamesController {
       user,
     };
   }
+
+  @Get("pinyin/models/bomb")
+  @Render("games/layout")
+  @UseGuards(JwtGuard)
+  bombModelPage(@Req() req: Request, @HttpAuth() user: AuthUser) {
+    return {
+      appName: this.gamesService.getAppName(),
+      title: "Pinyin",
+      page: "pinyin/models/bomb/index",
+      user,
+    };
+  }
 }
