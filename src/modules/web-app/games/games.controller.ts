@@ -42,4 +42,15 @@ export class GamesController {
       user,
     };
   }
+  @Get("pinyin/models/builder")
+  @Render("games/layout")
+  @UseGuards(JwtGuard)
+  builderModelPage(@Req() req: Request, @HttpAuth() user: AuthUser) {
+    return {
+      appName: this.gamesService.getAppName(),
+      title: "Pinyin",
+      page: "pinyin/models/builder/index",
+      user,
+    };
+  }
 }
