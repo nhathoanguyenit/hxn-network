@@ -31,6 +31,18 @@ export class GamesController {
     };
   }
 
+  @Get("pinyin/models/charactor")
+  @Render("games/layout")
+  @UseGuards(JwtGuard)
+  charactorModelPage(@Req() req: Request, @HttpAuth() user: AuthUser) {
+    return {
+      appName: this.gamesService.getAppName(),
+      title: "Pinyin",
+      page: "pinyin/models/charactor/index",
+      user,
+    };
+  }
+
   @Get("pinyin/models/bomb")
   @Render("games/layout")
   @UseGuards(JwtGuard)

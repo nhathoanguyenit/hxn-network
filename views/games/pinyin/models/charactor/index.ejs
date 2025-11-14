@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Character Model</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+
+    #charactor,
+    #meshview {
+      width: 50vw;
+      height: 100vh;
+      float: left;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="charactor"></div>
+  <div id="meshview"></div>
+
+  <!-- Script 1: Character view -->
+  <script type="module">
+    import * as THREE from '/plugins/three/build/three.module.js';
+    import {
+      OrbitControls
+    } from '/plugins/three/examples/jsm/controls/OrbitControls.js';
+    import {
+      GLTFLoader
+    } from '/plugins/three/examples/jsm/loaders/GLTFLoader.js';
+
+    (async () => {
+
+      const container = document.getElementById('charactor');
+
+      // Scene & Camera
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x222222);
+      const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
+      camera.position.set(20, 20, 20);
+
+      // Renderer
+      const renderer = new THREE.WebGLRenderer({
+        antialias: true
+      });
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      renderer.shadowMap.enabled = true;
+      container.appendChild(renderer.domElement);
+
+      // Controls
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+
+      // Lights
+      const light = new THREE.DirectionalLight(0xffffff, 1);
+      light.position.set(3, 5, 5);
+      light.castShadow = true;
+      scene.add(light);
+      scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+
+      // Plane
+      const plane = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), new THREE.ShadowMaterial({
+        opacity: 0.3
+      }));
+      plane.rotation.x = -Math.PI / 2;
+      plane.position.y = -1;
+      plane.receiveShadow = true;
+      scene.add(plane);
+
+      const loader = new GLTFLoader();
+      const modelPath = '/plugins/pinyin/models/charactor/charactor.gltf';
+
+      loader.load(modelPath, gltf => {
+        const model = gltf.scene;
+        model.scale.set(1, 1, 1);
+
+        const box = new THREE.Box3().setFromObject(model);
+        const center = box.getCenter(new THREE.Vector3());
+        model.position.sub(center);
+
+        model.traverse(obj => {
+          if (obj.isMesh) obj.castShadow = true;
+        });
+        scene.add(model);
+
+        // Axes helper
+        const axes = new THREE.AxesHelper(2);
+        axes.position.copy(center);
+        scene.add(axes);
+      });
+
+      // Animate
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      // Resize
+      window.addEventListener('resize', () => {
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+      });
+    })();
+  </script>
+
+  <!-- Script 2: Mesh view -->
+  <script type="module">
+    import * as THREE from '/plugins/three/build/three.module.js';
+    import {
+      OrbitControls
+    } from '/plugins/three/examples/jsm/controls/OrbitControls.js';
+    import {
+      GLTFLoader
+    } from '/plugins/three/examples/jsm/loaders/GLTFLoader.js';
+
+    (async () => {
+
+      const container = document.getElementById('meshview');
+
+      // Scene & Camera
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x111111);
+      const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
+      camera.position.set(1.5, 1.5, 3);
+
+      // Renderer
+      const renderer = new THREE.WebGLRenderer({
+        antialias: true
+      });
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      renderer.shadowMap.enabled = true;
+      container.appendChild(renderer.domElement);
+
+      // Controls
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+
+      // Lights
+      const light = new THREE.DirectionalLight(0xffffff, 1);
+      light.position.set(3, 5, 5);
+      light.castShadow = true;
+      scene.add(light);
+      scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+
+      // Plane
+      const plane = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), new THREE.ShadowMaterial({
+        opacity: 0.3
+      }));
+      plane.rotation.x = -Math.PI / 2;
+      plane.position.y = -1;
+      plane.receiveShadow = true;
+      scene.add(plane);
+
+      // Load model and convert to wireframe
+      const loader = new GLTFLoader();
+      const modelPath = '/plugins/pinyin/models/charactor/charactor.gltf';
+
+      loader.load(modelPath, gltf => {
+        const model = gltf.scene;
+        model.scale.set(2, 2, 2);
+
+        // Center model
+        const box = new THREE.Box3().setFromObject(model);
+        const center = box.getCenter(new THREE.Vector3());
+        model.position.sub(center);
+
+        model.traverse(obj => {
+          if (obj.isMesh) obj.material = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            wireframe: true
+          });
+        });
+        scene.add(model);
+
+        // Axes helper
+        const axes = new THREE.AxesHelper(2);
+        axes.position.copy(center);
+        scene.add(axes);
+      });
+
+      // Animate
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      // Resize
+      window.addEventListener('resize', () => {
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+      });
+    })();
+  </script>
+
+</body>
+
+</html>

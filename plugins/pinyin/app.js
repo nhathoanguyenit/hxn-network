@@ -13,7 +13,7 @@ let bombs = [];
 
 const { scene, camera, renderer, controls } = createScene(gridSize, gameEl);
 
-await loadPlayerTemplate('/plugins/pinyin/models/player.gltf');
+await loadPlayerTemplate('/plugins/pinyin/models/scene/scene.gltf');
 await loadBombTemplate('/plugins/pinyin/models/player.gltf');
 
 function animate() {
