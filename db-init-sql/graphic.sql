@@ -18,7 +18,9 @@ CREATE TABLE hxn_graphic.objects_ (
     parent_id_ INT,
     position_ FLOAT8[] DEFAULT ARRAY[0, 0, 0],
     rotation_ FLOAT8[] DEFAULT ARRAY[0, 0, 0],
-    scale FLOAT8[] DEFAULT ARRAY[1, 1, 1]
+    scale FLOAT8[] DEFAULT ARRAY[1, 1, 1],
+    created_at_ TIMESTAMP DEFAULT NOW(),
+    updated_at_ TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE hxn_graphic.geometry_ (
@@ -38,5 +40,9 @@ CREATE TABLE hxn_graphic.materials_ (
     color_ TEXT DEFAULT '#ffffff',
     roughness_ FLOAT8 DEFAULT 0.5,
     metalness_ FLOAT8 DEFAULT 0.0,
-    texture_url_ TEXT
+    texture_url_ TEXT,
+    created_at_ TIMESTAMP DEFAULT NOW(),
+    updated_at_ TIMESTAMP DEFAULT NOW()
 );
+
+-- Insert a sample model

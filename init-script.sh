@@ -81,3 +81,11 @@ nest g controller models --no-spec
 nest g module objects
 nest g service objects --no-spec
 nest g controller objects --no-spec
+
+nest g module geometries
+nest g service geometries --no-spec
+nest g controller geometries --no-spec
+
+nest g module materials
+nest g service materials --no-spec
+nest g controller materials --no-spec
