@@ -9,6 +9,7 @@ import { ToolModule } from "./tool/tool.module";
 import { WebAppModule } from "./web-app/web-app.module";
 import * as chatEntities from "./chat/chat.entities";
 import * as userEntities from "./user/user.entities";
+import * as graphicEntities from "./graphic/graphic.entities";
 import { GraphicModule } from "./graphic/graphic.module";
 
 @Module({
@@ -30,7 +31,7 @@ import { GraphicModule } from "./graphic/graphic.module";
           entities: [
             ...Object.values(chatEntities), 
             ...Object.values(userEntities),
-            ...Object.values(userEntities)
+            ...Object.values(graphicEntities)
           ],
         };
       },

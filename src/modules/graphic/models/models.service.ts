@@ -2,13 +2,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Model } from '../graphic.entities';
+import { Model3D } from '../graphic.entities';
 
 @Injectable()
 export class ModelsService {
   constructor(
-    @InjectRepository(Model)
-    private readonly modelRepo: Repository<Model>,
+    @InjectRepository(Model3D)
+    private readonly modelRepo: Repository<Model3D>,
   ) {}
 
   findAll() {
@@ -19,12 +19,12 @@ export class ModelsService {
     return this.modelRepo.findOne({ where: { id }, relations: ['objects'] });
   }
 
-  create(data: Partial<Model>) {
+  create(data: Partial<Model3D>) {
     const model = this.modelRepo.create(data);
     return this.modelRepo.save(model);
   }
 
-  async update(id: string, data: Partial<Model>) {
+  async update(id: string, data: Partial<Model3D>) {
     await this.modelRepo.update(id, data);
     return this.findOne(id);
   }

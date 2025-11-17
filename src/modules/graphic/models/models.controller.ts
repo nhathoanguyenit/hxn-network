@@ -1,7 +1,7 @@
 // src/modules/graphic/models/models.controller.ts
 import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common';
 import { ModelsService } from './models.service';
-import { Model } from '../graphic.entities';
+import { Model3D } from '../graphic.entities';
 
 @Controller('models')
 export class ModelsController {
@@ -18,12 +18,12 @@ export class ModelsController {
   }
 
   @Post()
-  create(@Body() data: Partial<Model>) {
+  create(@Body() data: Partial<Model3D>) {
     return this.modelsService.create(data);
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() data: Partial<Model>) {
+  update(@Param('id') id: string, @Body() data: Partial<Model3D>) {
     return this.modelsService.update(id, data);
   }
 

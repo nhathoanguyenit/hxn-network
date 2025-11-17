@@ -1,103 +1,227 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>3D Oval + PCA + Synced Cameras</title>
+    <style>
+      body {
+        margin: 0;
+        display: flex;
+        flex-wrap: wrap;
+        background: #111;
+        color: white;
+        font-family: sans-serif;
+      }
+      canvas {
+        border: 1px solid #444;
+        margin: 5px;
+      }
+      #controls,
+      #view-buttons {
+        margin: 10px;
+      }
+      label {
+        margin-right: 10px;
+        display: inline-block;
+      }
+      button {
+        margin-right: 5px;
+        padding: 4px 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <div id="controls">
+        <label>PC1 <input id="p1" type="range" min="-2" max="2" step="0.01" value="0" /></label>
+        <label>PC2 <input id="p2" type="range" min="-2" max="2" step="0.01" value="0" /></label>
+        <label>PC3 <input id="p3" type="range" min="-2" max="2" step="0.01" value="0" /></label>
+      </div>
 
-<head>
-  <meta charset="UTF-8">
-  <title>3D Oval + PCA + Projections with Shadows</title>
-  <style>
-    body {
-      margin: 0;
-      display: flex;
-      flex-wrap: wrap;
-      background: #111;
-      color: white;
-      font-family: sans-serif;
-    }
-  </style>
-</head>
+      <div id="view-buttons">
+        <button id="viewXY">XY View</button>
+        <button id="viewXZ">XZ View</button>
+        <button id="viewYZ">YZ View</button>
+      </div>
 
-<body>
-  <div class="canvas3d-wrapper">
-    <canvas id="canvas3d" width="400" height="400"></canvas>
-    <canvas id="canvas3d-material" width="400" height="400"></canvas>
-    <canvas id="canvasXY" width="200" height="200"></canvas>
-    <canvas id="canvasXZ" width="200" height="200"></canvas>
-    <canvas id="canvasYZ" width="200" height="200"></canvas>
-    <div id="info"></div>
-  </div>
+      <div class="d-flex">
+        <canvas id="canvas3d-mesh" width="605" height="400"></canvas>
+        <canvas id="canvas3d-material" width="605" height="400"></canvas>
+      </div>
 
-</body>
+      <div id="info"></div>
+      <button id="save">Save</button>
+    </div>
+    <script type="module">
+      import * as THREE from "/plugins/three/build/three.module.js";
+      import { OrbitControls } from "/plugins/three/examples/jsm/controls/OrbitControls.js";
+      import { GLTFExporter } from "/plugins/three/examples/jsm/exporters/GLTFExporter.js";
+      import {
+        createAxes,
+        createRenderer,
+        createCamera,
+        createAmbientLight,
+        createDirectionalLights,
+        createDefaultSharp,
+        createPlane,
+      } from "/plugins/three/custom/three.helper.js";
 
-<script type="module">
-  import * as THREE from '/plugins/three/build/three.module.js';
-  import {
-    OrbitControls
-  } from '/plugins/three/examples/jsm/controls/OrbitControls.js';
+      // ------------------- Scenes -------------------
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x888888);
 
-  const canvas3d = document.getElementById("canvas3d");
-  const canvas3dMat = document.getElementById("canvas3d-material");
-  const canvasXY = document.getElementById("canvasXY");
-  const canvasXZ = document.getElementById("canvasXZ");
-  const canvasYZ = document.getElementById("canvasYZ");
+      const sceneMat = new THREE.Scene();
+      sceneMat.background = new THREE.Color(0x888888);
+      sceneMat.add(createAmbientLight());
+      const dirLight = createDirectionalLights();
+      sceneMat.add(dirLight);
 
-  async function loadMesh() {
-    const res = await axios.get("/api/pinyin/player/mesh", {
-      credentials: "include"
-    });
-    const {
-      data
-    } = res.data;
-    return data;
-  }
+      // ------------------- Renderers -------------------
+      const canvas3d = document.getElementById("canvas3d-mesh");
+      const renderer3d = createRenderer(canvas3d, canvas3d.width, canvas3d.height);
 
-  function meshArrayToGeometry(meshArray) {
-    const geometry = new THREE.BufferGeometry();
-    const vertices = new Float32Array(meshArray);
-    geometry.setAttribute("position", new THREE.BufferAttribute(vertices, 3));
-    // geometry.computeVertexNormals();
-    return geometry;
-  }
+      const canvas3dMat = document.getElementById("canvas3d-material");
+      const renderer3dMat = createRenderer(canvas3dMat, canvas3dMat.width, canvas3dMat.height);
+      renderer3dMat.shadowMap.enabled = true;
+      renderer3dMat.shadowMap.type = THREE.PCFSoftShadowMap;
 
-  const renderer = new THREE.WebGLRenderer({
-    canvas: canvas3d,
-    antialias: true
-  });
-  renderer.setSize(400, 400);
+      // ------------------- Cameras -------------------
+      const camera3d = createCamera(
+        "perspective",
+        new THREE.Vector3(2, 2, 4),
+        null,
+        new THREE.Vector3(0, 0, 0),
+        canvas3d.width / canvas3d.height
+      );
+      const camera3dMat = createCamera(
+        "perspective",
+        new THREE.Vector3(2, 2, 4),
+        null,
+        new THREE.Vector3(0, 0, 0),
+        canvas3dMat.width / canvas3dMat.height
+      );
 
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x111111);
+      // ------------------- Controls -------------------
+      const controls3d = new OrbitControls(camera3d, renderer3d.domElement);
+      const controlsMat = new OrbitControls(camera3dMat, renderer3dMat.domElement);
 
-  const camera = new THREE.PerspectiveCamera(50, 400 / 400, 0.1, 100);
-  camera.position.set(2, 2, 2);
+      // ------------------- Geometry -------------------
+      const { mean, indices, pcs } = createDefaultSharp();
+      const geometry = new THREE.BufferGeometry();
+      const positions = new Float32Array(mean);
+      geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      geometry.setIndex(indices);
 
-  const controls = new OrbitControls(camera, renderer.domElement);
+      const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color: 0x111111, wireframe: true }));
+      scene.add(mesh, createAxes(1));
 
-  const light = new THREE.DirectionalLight(0xffffff, 1);
-  light.position.set(2, 2, 2);
-  scene.add(light);
-  scene.add(new THREE.AmbientLight(0xffffff, 0.3));
+      const meshMat = new THREE.Mesh(
+        geometry,
+        new THREE.MeshStandardMaterial({ color: 0xfad5d2, metalness: 0.5, roughness: 0.4 })
+      );
+      meshMat.castShadow = true;
+      meshMat.receiveShadow = true;
+      sceneMat.add(meshMat, createAxes(1));
 
-  loadMesh().then(meshArray => {
-    const geom = meshArrayToGeometry(meshArray);
+      const plane = createPlane(50, 50);
+      sceneMat.add(plane);
 
-    const material = new THREE.MeshStandardMaterial({
-      color: 0x33aaff,
-      roughness: 0.4,
-      metalness: 0.1
-    });
+      const lightSphere = new THREE.Mesh(
+        new THREE.SphereGeometry(0.05, 16, 16),
+        new THREE.MeshBasicMaterial({ color: 0xffffff })
+      );
+      lightSphere.position.copy(dirLight.position);
+      sceneMat.add(lightSphere);
+      sceneMat.add(new THREE.DirectionalLightHelper(dirLight, 0.3, 0xffff00));
 
-    const mesh = new THREE.Mesh(geom, material);
+      // ------------------- PCA Update -------------------
+      const updateOval = () => {
+        const a1 = parseFloat(document.getElementById("p1").value);
+        const a2 = parseFloat(document.getElementById("p2").value);
+        const a3 = parseFloat(document.getElementById("p3").value);
+        for (let i = 0; i < mean.length; i++) {
+          positions[i] = mean[i] + a1 * pcs[0][i] + a2 * pcs[1][i] + a3 * pcs[2][i];
+        }
+        geometry.attributes.position.needsUpdate = true;
+      };
+      ["p1", "p2", "p3"].forEach((id) => document.getElementById(id).addEventListener("input", updateOval));
 
-    scene.add(mesh);
-    animate();
-  });
+      document.getElementById("info").innerHTML =
+        `<strong>Vertices:</strong> ${mean.length / 3}<br><strong>PCA components:</strong> ${pcs.length}`;
 
-  function animate() {
-    requestAnimationFrame(animate);
-    controls.update();
-    renderer.render(scene, camera);
-  }
-</script>
+      // ------------------- Camera View Buttons -------------------
+      const setCameraView = (camera, controls, view) => {
+        switch (view) {
+          case "XY":
+            camera.position.set(0, 0, 5);
+            camera.up.set(0, 1, 0);
+            break;
+          case "XZ":
+            camera.position.set(0, 5, 0);
+            camera.up.set(0, 0, -1);
+            break;
+          case "YZ":
+            camera.position.set(5, 0, 0);
+            camera.up.set(0, 1, 0);
+            break;
+        }
+        camera.lookAt(0, 0, 0);
+        controls.update();
+      };
+      ["XY", "XZ", "YZ"].forEach((view) => {
+        document.getElementById("view" + view).addEventListener("click", () => {
+          setCameraView(camera3d, controls3d, view);
+          setCameraView(camera3dMat, controlsMat, view);
+        });
+      });
 
+      // ------------------- Animation + Sync -------------------
+      const animate = () => {
+        requestAnimationFrame(animate);
 
+        updateOval();
+
+        // Sync material camera with mesh camera
+        camera3dMat.position.copy(camera3d.position);
+        camera3dMat.quaternion.copy(camera3d.quaternion);
+        controlsMat.target.copy(controls3d.target);
+        controlsMat.update();
+
+        renderer3d.render(scene, camera3d);
+        renderer3dMat.render(sceneMat, camera3dMat);
+      };
+      animate();
+
+      // ------------------- Save GLTF -------------------
+      document.getElementById("save").addEventListener("click", () => {
+        const exporter = new GLTFExporter();
+        geometry.computeVertexNormals();
+        meshMat.updateMatrixWorld(true);
+        exporter.parse(
+          meshMat,
+          (gltf) => {
+            const blob = new Blob([JSON.stringify(gltf, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "model.gltf";
+            link.click();
+            URL.revokeObjectURL(url);
+          },
+          { binary: false }
+        );
+      });
+
+      // ------------------- Resize -------------------
+      window.addEventListener("resize", () => {
+        const resizeRenderer = (r, c) => r.setSize(c.width, c.height);
+        resizeRenderer(renderer3d, canvas3d);
+        resizeRenderer(renderer3dMat, canvas3dMat);
+        camera3d.aspect = canvas3d.width / canvas3d.height;
+        camera3d.updateProjectionMatrix();
+        camera3dMat.aspect = canvas3dMat.width / canvas3dMat.height;
+        camera3dMat.updateProjectionMatrix();
+      });
+    </script>
+  </body>
 </html>

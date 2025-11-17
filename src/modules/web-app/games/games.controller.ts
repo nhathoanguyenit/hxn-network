@@ -58,11 +58,23 @@ export class GamesController {
   @Get("pinyin/models/builder")
   @Render("games/layout")
   @UseGuards(JwtGuard)
-  builderModelPage(@Req() req: Request, @HttpAuth() user: AuthUser) {
+  modelBuilderPage(@Req() req: Request, @HttpAuth() user: AuthUser) {
     return {
       appName: this.gamesService.getAppName(),
       title: "Pinyin",
       page: "pinyin/models/builder/index",
+      user,
+    };
+  }
+
+  @Get("pinyin/models/loader")
+  @Render("games/layout")
+  @UseGuards(JwtGuard)
+  modelLoaderPage(@Req() req: Request, @HttpAuth() user: AuthUser) {
+    return {
+      appName: this.gamesService.getAppName(),
+      title: "Pinyin",
+      page: "pinyin/models/loader/index",
       user,
     };
   }
