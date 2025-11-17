@@ -69,3 +69,15 @@ nest g controller services --no-spec
 nest g module games
 nest g service games --no-spec
 nest g controller games --no-spec
+
+nest g module graphic
+nest g service graphic --no-spec
+nest g controller graphic --no-spec
+
+nest g module models
+nest g service models --no-spec
+nest g controller models --no-spec
+
+nest g module objects
+nest g service objects --no-spec
+nest g controller objects --no-spec

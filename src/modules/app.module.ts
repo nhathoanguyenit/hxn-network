@@ -9,7 +9,7 @@ import { ToolModule } from "./tool/tool.module";
 import { WebAppModule } from "./web-app/web-app.module";
 import * as chatEntities from "./chat/chat.entities";
 import * as userEntities from "./user/user.entities";
-import { PinyinModule } from "./pinyin/pinyin.module";
+import { GraphicModule } from "./graphic/graphic.module";
 
 @Module({
   imports: [
@@ -27,7 +27,11 @@ import { PinyinModule } from "./pinyin/pinyin.module";
           database: process.env.DB_NAME,
           synchronize: false,
           logging: false,
-          entities: [...Object.values(chatEntities), ...Object.values(userEntities)],
+          entities: [
+            ...Object.values(chatEntities), 
+            ...Object.values(userEntities),
+            ...Object.values(userEntities)
+          ],
         };
       },
     }),
@@ -40,8 +44,8 @@ import { PinyinModule } from "./pinyin/pinyin.module";
     ChatModule,
     UserModule,
     ToolModule,
+    GraphicModule,
     WebAppModule,
-    PinyinModule,
   ],
 })
 export class AppModule {}

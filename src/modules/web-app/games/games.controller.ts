@@ -54,6 +54,7 @@ export class GamesController {
       user,
     };
   }
+  
   @Get("pinyin/models/builder")
   @Render("games/layout")
   @UseGuards(JwtGuard)

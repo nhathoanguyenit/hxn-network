@@ -1,4 +1,13 @@
 {
+    "java.configuration.updateBuildConfiguration": "interactive",
+    "java.compile.nullAnalysis.mode": "disabled",
+    "window.zoomLevel": -2,
+    "editor.tabSize": 2,
+    "java.configuration.runtimes": [
+    ],
+    "files.exclude": {
+     "**/.git": false
+    },
     "emmet.includeLanguages": {
         "ejs": "html",
     },

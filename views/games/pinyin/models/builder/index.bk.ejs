@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>3D Oval + PCA + Projections with Shadows</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      flex-wrap: wrap;
+      background: #111;
+      color: white;
+      font-family: sans-serif;
+    }
+
+    canvas {
+      border: 1px solid #444;
+      margin: 5px;
+    }
+
+    #ui {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 10;
+    }
+
+    #ui label {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    #info {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      font-family: sans-serif;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- UI -->
+  <div id="ui">
+    <div>
+      <label style="height: 15px;">PC1 
+        <input id="p1" type="range" min="-2" max="2" step="0.01" value="0">
+      </label>
+      <label style="height: 15px;">PC2 
+        <input id="p2" type="range" min="-2" max="2" step="0.01" value="0">
+      </label>
+      <label style="height: 15px;">PC3 
+        <input id="p3" type="range" min="-2" max="2" step="0.01" value="0">
+      </label>
+    </div>
+  </div>
+
+  <!-- Canvases -->
+  <canvas id="canvas3d" width="400" height="400"></canvas>
+  <canvas id="canvas3d-material" width="400" height="400"></canvas>
+  <canvas id="canvasXY" width="200" height="200"></canvas>
+  <canvas id="canvasXZ" width="200" height="200"></canvas>
+  <canvas id="canvasYZ" width="200" height="200"></canvas>
+
+  <div id="info"></div>
+
+  <script type="module">
+    import * as THREE from '/plugins/three/build/three.module.js';
+    import {
+      OrbitControls
+    } from '/plugins/three/examples/jsm/controls/OrbitControls.js';
+
+    const createAxes = (length = 1) => {
+      const axes = new THREE.Group();
+      const colors = [0xff0000, 0x00ff00, 0x0000ff];
+      const vectors = [new THREE.Vector3(length, 0, 0), new THREE.Vector3(0, length, 0), new THREE.Vector3(0, 0, length)];
+      for (let i = 0; i < 3; i++) {
+        const mat = new THREE.LineBasicMaterial({
+          color: colors[i]
+        });
+        const geom = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), vectors[i]]);
+        axes.add(new THREE.Line(geom, mat));
+      }
+      return axes;
+    };
+
+    const createRenderer = (canvas, width, height, antialias = true) => {
+      const renderer = new THREE.WebGLRenderer({
+        canvas,
+        antialias
+      });
+      renderer.setSize(width, height);
+      return renderer;
+    };
+
+    const createCamera = (type, canvas, position, up = null, lookAt = new THREE.Vector3(0, 0, 0)) => {
+      let camera;
+      if (type === "perspective") {
+        camera = new THREE.PerspectiveCamera(60, canvas.width / canvas.height, 0.1, 100);
+      } else {
+        camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
+      }
+      camera.position.copy(position);
+      if (up) camera.up.copy(up);
+      camera.lookAt(lookAt);
+      return camera;
+    };
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x111111);
+
+    const sceneMat = new THREE.Scene();
+    sceneMat.background = new THREE.Color(0x111111);
+
+    // Lights
+    const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+    sceneMat.add(ambient);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight.position.set(5, 5, 5);
+    dirLight.castShadow = true;
+    dirLight.shadow.camera.left = -5;
+    dirLight.shadow.camera.right = 5;
+    dirLight.shadow.camera.top = 5;
+    dirLight.shadow.camera.bottom = -5;
+    dirLight.shadow.bias = -0.001;
+    sceneMat.add(dirLight);
+
+    const canvas3d = document.getElementById("canvas3d");
+    const renderer3d = createRenderer(canvas3d, canvas3d.width, canvas3d.height);
+    const camera3d = createCamera("perspective", canvas3d, new THREE.Vector3(2, 2, 4));
+    const controls3d = new OrbitControls(camera3d, renderer3d.domElement);
+
+    const canvas3dMat = document.getElementById("canvas3d-material");
+    const renderer3dMat = createRenderer(canvas3dMat, canvas3dMat.width, canvas3dMat.height);
+    renderer3dMat.shadowMap.enabled = true;
+    renderer3dMat.shadowMap.type = THREE.PCFSoftShadowMap;
+    const camera3dMat = createCamera("perspective", canvas3dMat, new THREE.Vector3(2, 2, 4));
+    const controlsMat = new OrbitControls(camera3dMat, renderer3dMat.domElement);
+
+    const rendererXY = createRenderer(document.getElementById("canvasXY"), 200, 200);
+    const cameraXY = createCamera("orthographic", null, new THREE.Vector3(0, 0, 2), new THREE.Vector3(0, 1, 0));
+    cameraXY.zoom = 0.7;
+    cameraXY.updateProjectionMatrix();
+
+    const rendererXZ = createRenderer(document.getElementById("canvasXZ"), 200, 200);
+    const cameraXZ = createCamera("orthographic", null, new THREE.Vector3(0, 2, 0), new THREE.Vector3(0, 0, -1));
+    cameraXZ.zoom = 0.7;
+    cameraXZ.updateProjectionMatrix();
+
+    const rendererYZ = createRenderer(document.getElementById("canvasYZ"), 200, 200);
+    const cameraYZ = createCamera("orthographic", null, new THREE.Vector3(2, 0, 0));
+    cameraYZ.zoom = 0.7;
+    cameraYZ.updateProjectionMatrix();
+
+    const mean = [];
+    const rx0 = 0.6,
+      ry0 = 0.66,
+      rz0 = 0.6;
+    const latSteps = 16,
+      lonSteps = 16;
+
+    for (let i = 0; i <= latSteps; i++) {
+      const theta = (i / latSteps) * Math.PI;
+      const sinTheta = Math.sin(theta),
+        cosTheta = Math.cos(theta);
+      let a = theta < Math.PI / 3 ? 1.05 : (theta < 2 * Math.PI / 3 ? 1.02 : 0.99);
+      for (let j = 0; j < lonSteps; j++) {
+        const phi = (j / lonSteps) * 2 * Math.PI;
+        mean.push(
+          rx0 * a * sinTheta * Math.cos(phi),
+          ry0 * a * cosTheta,
+          rz0 * a * sinTheta * Math.sin(phi)
+        );
+      }
+    }
+
+    let minY = Infinity;
+    for (let i = 1; i < mean.length; i += 3) {
+      if (mean[i] < minY) minY = mean[i];
+    }
+    for (let i = 1; i < mean.length; i += 3) {
+      mean[i] -= minY; 
+    }
+
+    const pcs = [
+      mean.map((v, i) => i % 3 === 0 ? 0.2 * v : 0),
+      mean.map((v, i) => i % 3 === 1 ? -0.1 * v : 0),
+      mean.map((v, i) => i % 3 === 2 ? 0.2 * Math.sin(mean[i - 1] * 2 * Math.PI) : 0)
+    ];
+
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(mean);
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+    const indices = [];
+    for (let i = 0; i < latSteps; i++) {
+      for (let j = 0; j < lonSteps; j++) {
+        const a = i * lonSteps + j;
+        const b = a + lonSteps;
+        let c = b + 1,
+          d = a + 1;
+        if (j === lonSteps - 1) {
+          c -= lonSteps;
+          d -= lonSteps;
+        }
+        indices.push(a, b, d, b, c, d);
+      }
+    }
+    geometry.setIndex(indices);
+
+    const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
+      color: 0x44ffcc,
+      wireframe: true
+    }));
+    const meshMat = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({
+      color: 0xfad5d2,
+      metalness: 0.5,
+      roughness: 0.4
+    }));
+    meshMat.castShadow = true;
+    meshMat.receiveShadow = true;
+
+    scene.add(mesh, createAxes(1));
+    sceneMat.add(meshMat, createAxes(1));
+
+    // Plane for shadows
+    const planeGeom = new THREE.PlaneGeometry(50, 50);
+    const planeMat = new THREE.ShadowMaterial({
+      opacity: 0.5,
+      color: 0x0000ff
+    });
+    const plane = new THREE.Mesh(planeGeom, planeMat);
+    plane.rotation.x = -Math.PI / 2;
+    plane.position.y = 0; // plane at bottom
+    plane.receiveShadow = true;
+    sceneMat.add(plane);
+
+    const lightSphereGeom = new THREE.SphereGeometry(0.05, 16, 16);
+    const lightSphereMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff
+    });
+    const lightSphere = new THREE.Mesh(lightSphereGeom, lightSphereMat);
+    lightSphere.position.copy(dirLight.position);
+    sceneMat.add(lightSphere);
+
+    const dirHelper = new THREE.DirectionalLightHelper(dirLight, 0.3, 0xffff00);
+    sceneMat.add(dirHelper);
+
+    // ------------------- UI & Update -------------------
+    const updateOval = () => {
+      const a1 = parseFloat(document.getElementById("p1").value || 0);
+      const a2 = parseFloat(document.getElementById("p2").value || 0);
+      const a3 = parseFloat(document.getElementById("p3").value || 0);
+      for (let i = 0; i < mean.length; i++) {
+        positions[i] = mean[i] + a1 * pcs[0][i] + a2 * pcs[1][i] + a3 * pcs[2][i];
+      }
+      geometry.attributes.position.needsUpdate = true;
+    };
+    ['p1', 'p2', 'p3'].forEach(id => document.getElementById(id).addEventListener('input', updateOval));
+
+    const infoDiv = document.getElementById("info");
+    infoDiv.innerHTML = `<strong>Vertices:</strong> ${mean.length / 3}<br><strong>PCA components:</strong> ${pcs.length}`;
+
+    // ------------------- Animation -------------------
+    const animate = () => {
+      requestAnimationFrame(animate);
+      updateOval();
+      renderer3d.render(scene, camera3d);
+      renderer3dMat.render(sceneMat, camera3dMat);
+      rendererXY.render(scene, cameraXY);
+      rendererXZ.render(scene, cameraXZ);
+      rendererYZ.render(scene, cameraYZ);
+    };
+    animate();
+
+    // ------------------- Resize -------------------
+    window.addEventListener('resize', () => {
+      const resizeRenderer = (renderer, canvas) => renderer.setSize(canvas.width, canvas.height);
+      resizeRenderer(renderer3d, canvas3d);
+      resizeRenderer(renderer3dMat, canvas3dMat);
+      [rendererXY, rendererXZ, rendererYZ].forEach(r => r.setSize(200, 200));
+      camera3d.aspect = canvas3d.width / canvas3d.height;
+      camera3d.updateProjectionMatrix();
+      camera3dMat.aspect = canvas3dMat.width / canvas3dMat.height;
+      camera3dMat.updateProjectionMatrix();
+    });
+  </script>
+</body>
+
+</html>
